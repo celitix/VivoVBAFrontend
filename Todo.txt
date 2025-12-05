@@ -1,0 +1,84 @@
+ {
+            "id": 16,
+            "requested_by": 14,
+            "updated_by": 1,
+            "site_id": 1,
+            "status": "APPROVED", // display in header
+            "created_at": "2025-11-10T11:08:00.000Z",
+            "site": {
+                "id": 1,
+                "name": "Arihant-Updated",
+                "address": "JAIPUR",
+                "company_id": 5,
+                "created_at": "2025-11-07T10:20:39.000Z"
+            },
+            "list": [
+                {
+                    "id": 15,
+                    "request_id": 16,
+                    "item_id": 1,
+                    "quantity": 1, // requested quantity
+                    "created_at": "2025-11-10T11:08:00.000Z",
+                    "received_quantity": 0,
+                    "size": null,
+                    "item": {
+                        "id": 1,
+                        "name": "item-name", // item name
+                        "category_id": 2,
+                        "created_at": "2025-11-07T06:11:51.000Z",
+                        "unit": "",
+                        "category": {
+                            "id": 2,
+                            "name": "arihant", // category name
+                            "created_at": "2025-11-07T06:11:19.000Z"
+                        }
+                    }
+                },
+                {
+                    "id": 16,
+                    "request_id": 16,
+                    "item_id": 1,
+                    "quantity": 1,
+                    "created_at": "2025-11-10T11:08:00.000Z",
+                    "received_quantity": null,
+                    "size": null,
+                    "item": {
+                        "id": 1,
+                        "name": "item-name",
+                        "category_id": 2,
+                        "created_at": "2025-11-07T06:11:51.000Z",
+                        "unit": "",
+                        "category": {
+                            "id": 2,
+                            "name": "arihant",
+                            "created_at": "2025-11-07T06:11:19.000Z"
+                        }
+                    }
+                },
+                {
+                    "id": 17,
+                    "request_id": 16,
+                    "item_id": 2,
+                    "quantity": 1,
+                    "created_at": "2025-11-10T11:08:00.000Z",
+                    "received_quantity": null,
+                    "size": null,
+                    "item": {
+                        "id": 2,
+                        "name": "item-name2",
+                        "category_id": 2,
+                        "created_at": "2025-11-07T06:13:29.000Z",
+                        "unit": "",
+                        "category": {
+                            "id": 2,
+                            "name": "arihant",
+                            "created_at": "2025-11-07T06:11:19.000Z"
+                        }
+                    }
+                }
+            ],
+            "updatedBy": {
+                "id": 1,
+                "username": "projectmanager"
+            }
+        }
