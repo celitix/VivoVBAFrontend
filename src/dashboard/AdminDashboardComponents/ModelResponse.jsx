@@ -14,21 +14,30 @@ export default function ModelResponse({ data }) {
         d.responses.map((response) => ({
           user_id: d.user_id,
           user_name: d.user_name,
-          ...response,
+          model: response.model,
+          total_responses: Number(response.total_responses || 0),
+          total_leads: Number(response.total_leads || 0),
+          total_conversions: Number(response.total_conversions || 0),
         }))
       );
 
-      console.log("allResponses", allResponses)
+      // Aggregate counts by model
+      const aggregated = {};
 
-      // Deduplicate by model
-      const uniqueModelsMap = new Map();
       allResponses.forEach((res) => {
-        if (!uniqueModelsMap.has(res.model)) {
-          uniqueModelsMap.set(res.model, res);
+        if (!res.model) return; // skip empty model names
+
+        if (!aggregated[res.model]) {
+          aggregated[res.model] = { ...res }; // create a new object
+        } else {
+          // sum up the counts
+          aggregated[res.model].total_responses += res.total_responses;
+          aggregated[res.model].total_leads += res.total_leads;
+          aggregated[res.model].total_conversions += res.total_conversions;
         }
       });
 
-      const uniqueModelResponses = Array.from(uniqueModelsMap.values());
+      const uniqueModelResponses = Object.values(aggregated);
 
       setModelData(uniqueModelResponses);
     }

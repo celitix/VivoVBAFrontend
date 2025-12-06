@@ -13,6 +13,8 @@ import {
     Sparkles,
     Phone,
     MessageCircle,
+    Lock,
+    Clock
 } from "lucide-react";
 
 import {
@@ -562,16 +564,33 @@ const SurveyForm = () => {
                         <div className="flex items-center justify-center relative">
                             <div className="h-1.5 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 w-[99.4%] absolute z-[9999] top-0 rounded-t-full" />
                         </div>
-                        <div className="bg-white/95 backdrop-blur-2xl rounded-t-2xl rounded-b-3xl shadow-2xl border border-white/60 p-8 md:p-10  ">
-                            <div className="text-center mb-8">
-                                <h2 className="text-4xl font-bold text-gray-800 playf">
-                                    Customer Feedback
-                                </h2>
-                                <p className="text-gray-600 mt-2">Takes less than 2 minutes</p>
+                        <div className="bg-white/95 backdrop-blur-2xl rounded-t-2xl rounded-b-3xl shadow-2xl border border-white/60 p-4  md:p-10  ">
+                            <div className="text-center mb-5 ">
+                                <div className="text-center">
+                                    <h2 className="text-4xl font-bold text-gray-800 playf">
+                                        Customer Feedback
+                                    </h2>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-center gap-8 mt-10 text-sm text-gray-600">
+                                    <div className="flex  items-center gap-2">
+                                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                        <span>100% Anonymous</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Lock className="w-5 h-5 text-emerald-600" />
+                                        <span>Secure & Encrypted</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-5 h-5 text-emerald-600" />
+                                        <span>2 Minutes Only</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="space-y-6">
+                            <div className="space-y-6 flex flex-col  ">
                                 {/* Form fields same as before but cleaner */}
+                              
                                 <InputField
                                     label="Full Name"
                                     placeholder="Enter your name"
@@ -584,9 +603,11 @@ const SurveyForm = () => {
                                     }
                                     icon={<User className="w-5 h-5 text-gray-500" />}
                                     error={errors.consumer_name}
+                                    className=""
                                 />
+                             
 
-                                <div className="space-y-4">
+                                <div className="space-y-4 w-full ">
                                     <InputField
                                         label="Mobile Number"
                                         type="tel"
@@ -692,11 +713,11 @@ const SurveyForm = () => {
                                     menuPosition="fixed"
                                 />
 
-                                <div className="space-y-4">
-                                    <label className="text- font-semibold text-gray-800">
-                                        Feedback Type
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-4">
+                                <label className="text-md font-semibold text-gray-800">
+                                    Feedback Type
+                                </label>
+                                <div className="space-y-4 ">
+                                    <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
                                         <button
                                             onClick={() => {
                                                 setIsPurchase(true);
@@ -732,12 +753,8 @@ const SurveyForm = () => {
                                         onChange={(v) =>
                                             setFormData((prev) => ({ ...prev, model: v }))
                                         }
-
-
                                         options={modelList}
                                         loading={loading}
-
-
                                     />
                                 )}
 
@@ -763,7 +780,7 @@ const SurveyForm = () => {
                                 />
                             </div>
 
-                            <div className="mt-10 pt-8 border-t border-gray-200 text-center">
+                            <div className="mt-6 pt-4 border-t border-gray-200 text-center">
                                 <img
                                     src="/vivologonew.png"
                                     alt="vivo"

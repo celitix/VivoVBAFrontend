@@ -20,6 +20,8 @@ import ModelResponse from "./AdminDashboardComponents/ModelResponse";
 import { FaRegEnvelope } from "react-icons/fa";
 import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
 import { FaMobileAlt } from "react-icons/fa";
+import { RefreshCw } from "lucide-react";
+import UniversalButton from "@/components/common/UniversalButton";
 
 // Register Chart.js components
 ChartJS.register(
@@ -32,17 +34,11 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
-  const [tab, setTab] = useState(0);
   const [selectTab, setSelectTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [modelData, setModelData] = useState([]);
   const [metaData, setMetaData] = useState(null);
-
-  const tabs = [
-    { id: 0, label: "Overview" },
-    { id: 1, label: "Reports" },
-  ];
 
   const mainTabs = [
     { id: 0, label: "Users" },
@@ -59,9 +55,10 @@ const AdminDashboard = () => {
         setData(res.data);
         setMetaData(res.meta);
       }
-      setLoading(false);
     } catch (error) {
       console.log("error", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,6 +66,7 @@ const AdminDashboard = () => {
     trackLeadData();
   }, []);
 
+  console.log("loading", loading);
   // ****************data seggregation ****************
 
   useEffect(() => {
@@ -78,19 +76,30 @@ const AdminDashboard = () => {
         d.responses.map((response) => ({
           user_id: d.user_id,
           user_name: d.user_name,
-          ...response,
+          model: response.model,
+          total_responses: Number(response.total_responses || 0),
+          total_leads: Number(response.total_leads || 0),
+          total_conversions: Number(response.total_conversions || 0),
         }))
       );
 
-      // Deduplicate by model
-      const uniqueModelsMap = new Map();
+      // Aggregate counts by model
+      const aggregated = {};
+
       allResponses.forEach((res) => {
-        if (!uniqueModelsMap.has(res.model)) {
-          uniqueModelsMap.set(res.model, res);
+        if (!res.model) return; // skip empty model names
+
+        if (!aggregated[res.model]) {
+          aggregated[res.model] = { ...res }; // create a new object
+        } else {
+          // sum up the counts
+          aggregated[res.model].total_responses += res.total_responses;
+          aggregated[res.model].total_leads += res.total_leads;
+          aggregated[res.model].total_conversions += res.total_conversions;
         }
       });
 
-      const uniqueModelResponses = Array.from(uniqueModelsMap.values());
+      const uniqueModelResponses = Object.values(aggregated);
 
       setModelData(uniqueModelResponses);
     }
@@ -120,7 +129,6 @@ const AdminDashboard = () => {
     .filter((item) => item?.source?.toLowerCase() === "youtube")
     .reduce((sum, item) => sum + item.total_responses, 0);
 
-
   const sourceResponseData = {
     labels: ["Facebook", "YouTube", "Instagram"],
     datasets: [
@@ -143,28 +151,6 @@ const AdminDashboard = () => {
     ],
   };
 
-  const dashboardData = {
-    users: [
-      {
-        id: 10,
-        name: "Arihasnt",
-        summary: {
-          total_responses: 1,
-          total_leads: 0,
-          total_conversions: 0,
-          leads_per_response: 0,
-        },
-        charts: {
-          modelResponses: [{ model: "V60", total_responses: 1 }],
-          modelLeads: [{ model: "V60", total_leads: 0 }],
-          modelConversions: [{ model: "V60", total_conversions: 0 }],
-          sourceResponses: [{ source: "s", total_responses: 1 }],
-        },
-      },
-    ],
-  };
-
-  const user = dashboardData.users[0];
   const modelResponseData = {
     labels: modelData.map((item) => item.model), // X-axis → model names
     datasets: [
@@ -176,41 +162,43 @@ const AdminDashboard = () => {
     ],
   };
 
-  console.log("modelResponseData", modelResponseData);
-
   return (
     <div className="w-full p-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* ---------------- LEFT MAIN PANEL ---------------- */}
         <div className="col-span-4 md:col-span-3 bg-gray-50 p-6 rounded-xl shadow-sm">
           {/* Dashboard Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center md:justify-between mb-8 flex-wrap justify-center">
             <img src="/vivologonew.png" alt="vivo" className="h-12" />
-
             <h2 className="text-2xl font-semibold text-gray-700">
-              Admin Dashboard
+              Yingjia Communication Pvt. Ltd.
             </h2>
           </div>
           {/* Tabs */}
-          <div className="overflow-x-auto whitespace-nowrap scrollbar-thin">
-            <div className="flex gap-10 relative pb-2 w-max">
+          <div className="overflow-x-auto whitespace-nowrap scrollbar-thin flex justify-between">
+            <div className="flex gap-4 relative pb-2 w-max">
               {mainTabs.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setSelectTab(t.id)}
-                  className={`relative text-lg font-medium transition-all duration-300 
-          ${
-            selectTab === t.id
-              ? "text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
+                  className={`relative px-4 py-1 text-lg font-medium transition-all duration-300 rounded-full z-10
+                  ${
+                    selectTab === t.id
+                      ? "text-white"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
                   {t.label}
 
+                  {/* Animated capsule */}
                   {selectTab === t.id && (
                     <motion.div
-                      className="absolute left-0 right-0 h-[3px] bg-blue-600 mx-3 rounded-full"
-                      style={{ bottom: "-6px" }}
+                      layoutId="tab-capsule"
+                      className="absolute inset-0 rounded-full z-[-1]"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)", // gradient color
+                      }}
                       transition={{
                         type: "spring",
                         stiffness: 400,
@@ -220,6 +208,20 @@ const AdminDashboard = () => {
                   )}
                 </button>
               ))}
+            </div>
+            <div className="flex items-center">
+              <UniversalButton
+                variant="secondary"
+                label={loading ? "Refreshing..." : "Refresh"}
+                disabled={loading}
+                icon={
+                  <RefreshCw
+                    className={loading ? "animate-spin scale-x-[-1]" : ""}
+                    size="18px"
+                  />
+                }
+                onClick={() => trackLeadData()}
+              />
             </div>
           </div>
 
@@ -587,6 +589,18 @@ const AdminDashboard = () => {
               {metaData?.recentLeadsCount}
             </p>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
+          >
+            <h3 className="text-gray-600 text-sm font-medium">Total Models</h3>
+            <p className="text-xl font-semibold mt-1 text-purple-600">
+              {modelData?.length}
+            </p>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -594,5 +608,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-
-// Add this logo at top left or right <img src="/vivologonew.png" alt="vivo" className="h-14 mx-auto mb-4" />
