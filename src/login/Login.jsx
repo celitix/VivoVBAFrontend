@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
+import { FaUserAlt, FaPhoneAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { FaLock } from "react-icons/fa";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+
+import { login } from "@/apis/login/login";
 import InputField from "@/components/common/InputField";
 import UniversalButton from "@/components/common/UniversalButton";
-import { login } from "@/apis/login/login";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
-import { motion } from "framer-motion";
-import { FaUserAlt, FaPhoneAlt } from "react-icons/fa";
-import { FaLock } from "react-icons/fa";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -15,17 +16,16 @@ const Login = () => {
     password: "",
     mobile: "",
   });
-  
+
   const navigate = useNavigate();
 
   // Handle login
   async function handleLogin() {
     if (!inputDetails.mobile?.trim() || !inputDetails.password?.trim()) {
-      return toast.error("Please enter username and Mobile No.");
+      return toast.error("Please enter Mobile No. and Password.");
     }
 
     setLoading(true);
-
     let payload = {
       mobile: inputDetails.mobile,
       password: inputDetails.password,
@@ -52,14 +52,8 @@ const Login = () => {
           ? "Unauthorized: Invalid credentials"
           : null);
 
-      const statusCode = err?.response?.status;
-
-      console.log("Login Error:", err?.response);
-      console.log("Login Error:", err);
-
       if (backendMessage) {
-        // toast.error(`${backendMessage} (Error ${statusCode})`);
-        toast.error(`${backendMessage}`);
+        console.error(`${backendMessage}`)
       } else {
         toast.error("Something went wrong. Please try again.");
       }
@@ -68,24 +62,24 @@ const Login = () => {
     }
   }
 
-  // useEffect(() => {
-  //   const token = sessionStorage.getItem("token");
-  //   if (token) navigate("/");
-  // }, [navigate]);
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (token) navigate("/");
+  }, [navigate]);
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-cover bg-center">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-cover bg-center px-2">
       {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-white/40 to-blue-100/40 backdrop-blur-md"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 backdrop-blur-md"></div>
 
       {/* Login Card */}
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="relative z-10 bg-white/80 backdrop-blur-xl shadow-2xl border-2 border-dashed border-blue-200 rounded-3xl p-10 w-full max-w-md sm:max-w-lg"
+        className="relative z-10 bg-white/80 backdrop-blur-xl shadow-2xl border-2  border-[#4A5FA7] rounded-3xl md:p-10 p-6 w-full max-w-md sm:max-w-lg"
       >
-        <div className="flex flex-col items-center mb-8">
+        {/* <div className="flex flex-col items-center mb-8">
           <motion.h2
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -96,6 +90,10 @@ const Login = () => {
           <p className="text-gray-500 text-sm mt-2 text-center">
             Log in to access your dashboard
           </p>
+        </div> */}
+        <div className="border-gray-200 text-center mb-6">
+          <img src="/vivologonew.png" alt="vivo" className="md:h-14 h-12 mx-auto mb-4" />
+          <p className="md:text-lg text-md font-bold text-gray-800">"Yingjia Communication Pvt. Ltd."</p>
         </div>
 
         <>
@@ -116,6 +114,7 @@ const Login = () => {
                   mobile: e.target.value,
                 })
               }
+              disabled={loading}
             />
 
             <InputField
@@ -130,6 +129,7 @@ const Login = () => {
                   password: e.target.value,
                 })
               }
+              disabled={loading}
             />
 
             <UniversalButton
@@ -143,6 +143,14 @@ const Login = () => {
             />
           </motion.form>
         </>
+        <div className="mt-5 pt-4 border-t border-gray-200 text-center">
+          <p className="text-sm text-gray-600">
+            Official Partner • Powered by <span className="font-bold text-blue-600">vivo</span>
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            © {new Date().getFullYear()} All rights reserved.
+          </p>
+        </div>
       </motion.div>
     </div>
   );

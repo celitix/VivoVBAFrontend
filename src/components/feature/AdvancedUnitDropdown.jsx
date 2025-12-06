@@ -88,7 +88,6 @@ const ALL_UNITS = Object.values(MeasuringUnitsGrouped).flat();
 
 export default function AdvancedUnitDropdown({ onChange }) {
     const [selectedUnits, setSelectedUnits] = useState([]);
-    console.log(selectedUnits)
     const [open, setOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState("all");
     const [search, setSearch] = useState("");

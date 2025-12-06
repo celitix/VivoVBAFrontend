@@ -1,46 +1,41 @@
 import React, { useEffect, useState } from "react";
-import DataTable from "../components/common/DataTable";
-import EditNoteIcon from "@mui/icons-material/EditNote";
 import { MdOutlineDeleteForever } from "react-icons/md";
-import UniversalButton from "../components/common/UniversalButton";
 import { useNavigate } from "react-router-dom";
-import CustomTooltip from "../components/common/CustomTooltip";
 import { IconButton } from "@mui/material";
+import toast from "react-hot-toast";
+import { Dialog } from "primereact/dialog";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+import { User, RefreshCw } from "lucide-react";
+import { FaLink } from "react-icons/fa6";
+import moment from "moment";
+import { FileSpreadsheet } from "lucide-react";
+
+
+import DataTable from "@/components/common/DataTable";
+import UniversalButton from "@/components/common/UniversalButton";
+import CustomTooltip from "@/components/common/CustomTooltip";
+import InputField from "@/components/common/InputField";
+import Capsule from "@/components/common/Capsule";
+import UniversalSkeleton from "../components/ui/UniversalSkeleton";
+
 import {
   getUserList,
   deleteUser,
   createUser,
-} from "@/apis/manageuser/manageuser";
-import toast from "react-hot-toast";
-import { Dialog } from "primereact/dialog";
-import InputField from "@/components/common/InputField";
-import DropdownWithSearch from "@/components/common/DropdownWithSearch";
-import { FiSearch } from "react-icons/fi";
-import { User } from "lucide-react";
-import Capsule from "@/components/common/Capsule";
-import UniversalSkeleton from "../components/ui/UniversalSkeleton";
-import moment from "moment";
-import { FaLink } from "react-icons/fa6";
-import {
   getUserUniqueTokenLink,
   getUserFilledSurveyForms,
 } from "@/apis/manageuser/manageuser";
-import {
-  FileSpreadsheet,
-} from "lucide-react";
 
 
 const ManageUser = () => {
   const [usersListData, setUsersListData] = useState([]);
-  const [metaData, setMetaData] = useState({});
   const [deleteIsVisible, setDeleteIsVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const navigate = useNavigate();
   const [searchData, setSearchData] = useState(false);
-  const [userName, setUserName] = useState(null);
-  const [userOptions, setUserOptions] = useState([]);
-  const [mobileNumber, setMobileNumber] = useState(null);
+  const [loadingAdd, setLoadingAdd] = useState(false);
+  const [userToken, setUserToken] = useState("");
+
+  const navigate = useNavigate();
 
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -51,8 +46,6 @@ const ManageUser = () => {
     mobile: "",
     password: "",
   });
-  const [loadingAdd, setLoadingAdd] = useState(false);
-  const [userToken, setUserToken] = useState("");
 
   const handleAdd = () => {
     setEditMode(false);
@@ -113,7 +106,6 @@ const ManageUser = () => {
     }
   };
 
-
   const handleDelete = (row) => {
     setDeleteIsVisible(true);
     setSelectedUser(row);
@@ -141,7 +133,6 @@ const ManageUser = () => {
   };
 
   const handleEdit = (row) => {
-    console.log(row);
     setEditMode(true);
     setEditData(row);
 
@@ -267,6 +258,8 @@ const ManageUser = () => {
           state: {
             forms: res.tokenResponse,
             user: row,
+            token,
+            meta: res.meta,
           },
         });
       } else {
@@ -277,7 +270,6 @@ const ManageUser = () => {
       toast.error("Something went wrong");
     }
   };
-
 
   const manageUsersColumns = [
     { Header: "Sr No", accessor: "srno", width: 50, flex: 0 },
@@ -339,17 +331,12 @@ const ManageUser = () => {
     try {
       const res = await getUserList(data);
       setUsersListData(res?.users);
-      setMetaData(res.meta);
     } catch (error) {
       console.log("error", error);
     } finally {
       setSearchData(false);
     }
   };
-
-  // useEffect(() => {
-  //   fetchUserList();
-  // }, []);
 
   useEffect(() => {
     fetchUserList();
@@ -358,7 +345,6 @@ const ManageUser = () => {
   const manageUsersData = usersListData?.map((user, index) => ({
     srno: index + 1,
     id: user.id,
-    // id: index + 1,
     created_at: moment(user?.created_at).format("DD-MM-YYYY HH:mm A") || "-",
     mobile: user.mobile,
     name: user.name,
@@ -366,11 +352,9 @@ const ManageUser = () => {
     password: user.password,
   }));
 
-
   return (
     <>
       <div className="">
-        {/* Header Section */}
         <div className="border-b border-gray-200 pb-3 mb-4 flex items-center justify-center text-center flex-wrap gap-4 md:flex-nowrap">
           <div
             className="mainlabel"
@@ -380,7 +364,24 @@ const ManageUser = () => {
           </div>
         </div>
         <div className="flex flex-wrap  gap-4 w-full items-end md:justify-between justify-center mb-3">
+          <div className="w-max">
+            <UniversalButton
+              variant="secondary"
+              label={searchData ? "Refreshing..." : "Refresh"}
+              disabled={searchData}
+              icon={<RefreshCw className={searchData ? "animate-spin scale-x-[-1]" : ""} size="18px" />}
+              onClick={() => fetchUserList()}
+            />
+          </div>
           <div className="flex gap-4">
+            <div className="w-max">
+              <UniversalButton
+                variant="secondary"
+                label="Create User"
+                onClick={handleAdd}
+                className="text-nowrap"
+              />
+            </div>
             <Capsule
               icon={User}
               label="Total Users"
@@ -388,25 +389,9 @@ const ManageUser = () => {
               variant="secondary"
               className="text-nowrap"
             />
-            <div className="w-max">
-              <UniversalButton
-                label={searchData ? "Refreshing..." : "Refresh"}
-                disabled={searchData}
-                icon={<FiSearch className="text-sm" />}
-                onClick={() => fetchUserList()}
-              />
-            </div>
-          </div>
-          <div className="w-max">
-            <UniversalButton
-              label="Create User"
-              onClick={handleAdd}
-              className="text-nowrap"
-            />
           </div>
         </div>
 
-        {/* Table Section */}
         {searchData ? (
           <UniversalSkeleton height="45rem" className="rounded-xl" />
         ) : (
@@ -418,11 +403,13 @@ const ManageUser = () => {
               pageSize={15}
               showCheckbox={false}
               height="680px"
+              showPageSizeDropdown={false}
             />
           </div>
         )}
-      </div >
+      </div>
 
+      {/* Add User Start */}
       <Dialog
         header={editMode ? "Edit User" : "Add User"}
         visible={addUserDialog}
@@ -505,6 +492,8 @@ const ManageUser = () => {
           </div>
         </div>
       </Dialog>
+      {/* Add User End */}
+
 
       {/* Delete User Start */}
       <Dialog

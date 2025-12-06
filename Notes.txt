@@ -1,3 +1,11 @@
-Login -
-Mobile - 7665576953
-password - Harish@gmail.com
+Login - admin - local
+Mobile - 9672670738
+password - arihant@gmail.com
+
+login - user
+Mobile - 7665576952
+password - akhil123
+
+server login - admin
+Mobile - 9672670732
+password - arihant@gmail.com

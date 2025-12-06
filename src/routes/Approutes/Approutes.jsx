@@ -12,45 +12,45 @@ import { useRoleContext } from "@/context/currentRoleContext";
 import Mainlayout from "@/mainlayout/Mainlayout";
 
 // Dashboard
-import Dashboard from "@/dashboard/Dashboard";
+import AdminDashboard from "@/dashboard/AdminDashboard";
+import UserDashboard from "@/dashboard/UserDashboard";
 
 // ManageUser
 import ManageUser from "@/ManageUser/ManageUser";
+
+// SurveyForm Reports
 import SurveyFormReport from "@/SurveyForm/SurveyFormReport";
 import SurveyFormUser from "@/SurveyForm/SurveyFormUser";
+
 import ManageModels from "@/ManageModels/ManageModels";
 import VivoTypingLoader from "@/components/loaders/VivoTypingLoader";
-// import SurveyForm from "@/SurveyForm/SurveyForm";
+import Loader from "../../components/loaders/Loader";
 
 const Approutes = () => {
   const { currentRole, isLoading } = useRoleContext();
 
   if (isLoading) {
-    return <VivoTypingLoader />;
+    // return <VivoTypingLoader />;
+    return <Loader />;
   }
-  console.log("currentRole from app routes", currentRole)
   return (
     <Routes>
       <Route path="/" element={<Mainlayout />}>
-        {/* <Route index element={<Dashboard />} /> */}
 
-        {/*========================Manage User====================== */}
-
-        {/* <Route path="/manageuser" element={<ManageUser />} /> */}
-
-        {/* <Route index element={<ManageUser />} /> */}
         {currentRole === "admin" && (
-          <Route index element={<ManageUser />} />
+          <Route index element={<AdminDashboard />} />
         )}
 
         {currentRole === "user" && (
-          <Route index element={<SurveyFormUser />} />
+          <Route index element={<UserDashboard />} />
         )}
 
         {/* {!currentRole && <Route index element={<Navigate to="/login" replace />} />} */}
 
+        <Route path="/manageuser" element={<ManageUser />} />
         <Route path="/surveyformreport" element={<SurveyFormReport />} />
         <Route path="/managemodels" element={<ManageModels />} />
+        <Route path="/surveyformuser" element={<SurveyFormUser />} />
       </Route>
     </Routes>
   );

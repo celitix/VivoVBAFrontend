@@ -61,18 +61,27 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     //   ],
     // },
     {
+      id: "1",
+      name: "dashboard",
+      label: "Dashboard",
+      icon: FileSpreadsheet,
+      type: "single",
+      path: "/",
+       role: ["admin", "user"]
+    },
+    {
       id: "2",
       name: "user-management",
       label: "User Management",
       icon: Users,
       type: "single",
-      path: "/",
+      path: "/manageuser",
       role: ["admin"]
     },
     {
       id: "3",
       name: "surveyform",
-      label: "Survey Form",
+      label: "Survey Report",
       icon: FileSpreadsheet,
       type: "single",
       path: "/surveyformreport",
@@ -90,10 +99,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     {
       id: "5",
       name: "surveyForm",
-      label: "Survey Form",
+      label: "Survey Report",
       icon: FileSpreadsheet,
       type: "single",
-      path: "/",
+      path: "/surveyformuser",
       role: ["user"]
     },
     {

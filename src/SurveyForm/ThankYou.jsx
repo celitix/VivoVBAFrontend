@@ -48,6 +48,7 @@ import { motion } from 'framer-motion';
 import { Mail, Sparkles } from 'lucide-react';
 import Lottie from 'lottie-react';
 import thankyou from '@/assets/animation/thankyou.json';
+import { useLocation } from 'react-router-dom';
 
 const ThankYou = () => {
     const { state } = useLocation();

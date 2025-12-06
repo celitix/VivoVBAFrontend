@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import moment from "moment";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, RefreshCw } from "lucide-react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import { IconButton } from "@mui/material";
@@ -19,6 +19,8 @@ import {
   X,
   MessageSquare,
 } from "lucide-react";
+import LoopIcon from "@mui/icons-material/Loop";
+
 
 import { getLeadData, createLead, trackData } from "@/apis/manageuser/manageuser";
 
@@ -31,6 +33,9 @@ import CustomTooltip from "@/components/common/CustomTooltip";
 import { exportToExcel } from "@/utils/exportToExcel";
 import Capsule from "@/components/common/Capsule";
 import DataTable from "@/components/common/DataTable";
+import { exportSurveyReport, getUserFilledSurveyForms } from "../apis/manageuser/manageuser";
+import UniversalSkeleton from "../components/ui/UniversalSkeleton";
+import toast from "react-hot-toast";
 
 
 const SurveyFormReport = () => {
@@ -41,22 +46,19 @@ const SurveyFormReport = () => {
   const [openAddLeadDialog, setOpenAddLeadDialog] = useState(false);
   const [rowData, setRowData] = useState(null);
 
+  const [forms, setForms] = useState(state?.forms || []);
+  const [meta, setMeta] = useState(state?.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 });
+  const token = state?.token;
+  const [page, setPage] = useState(meta.current_page);
+  const [pageSize, setPageSize] = useState(meta.per_page);
+  const [loading, setLoading] = useState(false);
+
+
   const [createLeadForm, setCreateLeadForm] = useState({
     remarks: "",
     imei: "",
     is_converted: false,
   });
-
-  // const handleView = async (row) => {
-  //   console.log("row", row);
-  //   try {
-  //     const res = getLeadData(row?.id);
-  //     console.log("res", res);
-  //     setLeadData(res?.lead);
-  //   } catch (error) {
-  //     console.log("error", error);
-  //   }
-  // };
 
   const handleAddLead = async (row) => {
     setRowData(row);
@@ -76,12 +78,32 @@ const SurveyFormReport = () => {
         remarks: "",
         imei: "",
       });
+      fetchForms(page, pageSize);
     } catch (error) {
       console.log("error", error);
     }
   };
 
-  if (!state?.forms) {
+  const fetchForms = async (p = 1, ps = 10) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await getUserFilledSurveyForms(token, { page: p, per_page: ps });
+      setForms(res.tokenResponse || []);
+      setMeta(res.meta || { current_page: p, per_page: ps, total: 0 });
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchForms(page, pageSize);
+    }
+  }, [page, pageSize, token]);
+
+  if (!token || !state?.user) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] p-10">
         <div className="bg-blue-50 p-8 rounded-2xl shadow-sm border border-blue-200 max-w-md text-center">
@@ -109,7 +131,7 @@ const SurveyFormReport = () => {
             icon to view available user surveys.
           </p>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/manageuser")}
             className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow"
           >
             Go to User Management
@@ -119,7 +141,7 @@ const SurveyFormReport = () => {
     );
   }
 
-  const forms = state.forms;
+  // const forms = state.forms;
 
   const columns = [
     { Header: "Sr No", accessor: "srno", width: 80 },
@@ -194,7 +216,8 @@ const SurveyFormReport = () => {
     { Header: "Remarks", accessor: "remarks" },
   ];
   const tableData = forms.map((item, index) => ({
-    srno: index + 1,
+    // srno: index + 1,
+    srno: ((meta.current_page - 1) * meta.per_page) + index + 1,
     created_at: moment(item.created_at).format("DD-MM-YYYY HH:mm A"),
     consumer_name: item.consumer_name || "-",
     contact_number: item.contact_number || "-",
@@ -217,18 +240,40 @@ const SurveyFormReport = () => {
     leads: item.leads,
   }));
 
-  const trackLeadData = async () => {
+  // const handleExport = async () => {
+  //   try {
+  //     const res = await exportSurveyReport(token);
+  //     toast.success("File Downloaded Successfully");
+  //   } catch (e) {
+  //     toast.error("Error downloading file");
+  //   }
+  // };
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
     try {
-      const res = await trackData();
-      console.log(res);
-    } catch (error) {
-      console.log("error", error);
+      const res = await exportSurveyReport(token);
+
+      const blob = new Blob([res.data], {
+        type: res.headers["content-type"] || "application/octet-stream"
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Survey_Report_${moment().format("DD-MM-YYYY_HHmm")}.xlsx`;
+      link.click();
+
+      window.URL.revokeObjectURL(url);
+      toast.success("Export completed!");
+    } catch (err) {
+      toast.error("Export failed");
+    } finally {
+      setExporting(false);
     }
   };
-
-  useEffect(() => {
-    trackLeadData();
-  }, []);
 
   return (
     <div className="">
@@ -236,37 +281,72 @@ const SurveyFormReport = () => {
         <h2 className="text-xl font-semibold ml-10">
           Survey Responses of - {state?.user?.name}
         </h2>
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-5 flex-wrap justify-center">
           <UniversalButton
+            icon={<RefreshCw className={loading ? "animate-spin scale-x-[-1]" : ""} size="18px" />}
+            variant="secondary"
+            onClick={() => fetchForms(page, pageSize)}
+            label="Refresh"
+          />
+          {/* <UniversalButton
             icon={<FileSpreadsheet className="text-xs" size="18px" />}
             variant="secondary"
             onClick={() =>
               exportToExcel(
-                exportOnlyColumns,        // ← hidden extra columns here
+                exportOnlyColumns,
                 tableData,
                 `Survey_Responses_${state?.user?.name || "Export"}`
-              )
-            }
+              )}
             label="Export Data"
+          /> */}
+          <UniversalButton
+            icon={<FileSpreadsheet className="text-xs" size="18px" />}
+            variant="secondary"
+            onClick={handleExport}
+            label="Export Data"
+            isLoading={exporting}
+            disabled={exporting}
           />
           <Capsule
             icon={FileSpreadsheet}
             label="Total Forms"
-            value={forms.length}
+            value={meta.total}
             variant="secondary"
             className="text-nowrap"
           />
         </div>
       </div>
 
-      <DataTable
-        data={tableData}
-        columns={columns}
-        title="Survey Responses"
-        pageSize={15}
-        showCheckbox={false}
-        height="718px"
-      />
+      {loading ? (
+        <div className="">
+          <UniversalSkeleton
+            width="100%"
+            height="80vh"
+            className="rounded-2xl"
+          />
+        </div>
+      ) : (
+        <DataTable
+          data={tableData}
+          columns={columns}
+          showCheckbox={false}
+          height="718px"
+          loading={loading}
+          totalRecords={meta.total}
+          pageSize={pageSize}
+          currentPage={page}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          onSort={(key, direction) => {
+            // Add sorting if needed
+          }}
+          sortConfig={null}
+          showPageSizeDropdown={false}
+        />
+      )}
 
       <Dialog
         header={

@@ -23,8 +23,9 @@ export const getUserUniqueTokenLink = async (data) => {
 };
 
 // get user filled forms
-export const getUserFilledSurveyForms = async (data) => {
-  return await fetchWithAuth(`/response/${data}`, {
+export const getUserFilledSurveyForms = async (token, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return await fetchWithAuth(`/response/${token}${query ? `?${query}` : ""}`, {
     method: "GET",
   });
 };
@@ -36,9 +37,9 @@ export const deleteUser = async (userid) => {
   });
 };
 
-// // Get Lead Data login user
-export const getLeadDataLoginUser = async () => {
-  return await fetchWithAuth(`/me`, {
+export const getLeadDataLoginUser = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return await fetchWithAuth(`/me/${query ? `?${query}` : ""}`, {
     method: "GET",
   });
 };
@@ -60,6 +61,22 @@ export const createLead = async (data) => {
 export const trackData = async () => {
   return await fetchWithAuth(`/tracking`, {
     method: "GET",
+  });
+};
+
+// export const exportSurveyReport = async (token) => {
+//   return await fetchWithAuth(`/export/${token}`, {
+//     responseType: "blob",
+//     method: "GET",
+//   });
+// };
+
+export const exportSurveyReport = async (token) => {
+  return await axios.get(`/api/export/${token}`, {
+    responseType: "blob",
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+    },
   });
 };
 

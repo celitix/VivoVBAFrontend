@@ -22,7 +22,7 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
 
   // const instance = axios.create({ timeout: 100000 });
   const instance = axios.create({
-    timeout: 100000,
+    timeout: 1000000,
     // validateStatus: (status) => status < 500,
     validateStatus: () => true,
   });

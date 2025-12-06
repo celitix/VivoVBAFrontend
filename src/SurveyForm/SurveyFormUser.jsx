@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import moment from "moment";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, RefreshCw } from "lucide-react";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { IconButton } from "@mui/material";
@@ -40,7 +40,7 @@ import InputField from "@/components/common/InputField";
 import UniversalTextArea from "@/components/common/UniversalTextArea";
 import UniversalRadioButton from "@/components/common/UniversalRadioButton";
 import UniversalSkeleton from "@/components/ui/UniversalSkeleton";
-import { trackData } from "../apis/manageuser/manageuser";
+import { exportSurveyReport, trackData } from "../apis/manageuser/manageuser";
 import toast from "react-hot-toast";
 
 const SurveyFormUser = () => {
@@ -50,8 +50,10 @@ const SurveyFormUser = () => {
   const [userData, setUserData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedChip, setSelectedChip] = useState("");
+  const [metaData, setMetaData] = useState({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  console.log("selectedChip", selectedChip);
 
   const issues = [
     "Affordability issue",
@@ -63,8 +65,12 @@ const SurveyFormUser = () => {
   const fetchLoginDataLogInUser = async () => {
     setIsLoading(true);
     try {
-      const res = await getLeadDataLoginUser();
+      const data = {
+        page: page,
+      }
+      const res = await getLeadDataLoginUser(data);
       setUserData(res?.data);
+      setMetaData(res?.meta);
     } catch (error) {
       console.log("error", error);
     } finally {
@@ -74,23 +80,13 @@ const SurveyFormUser = () => {
 
   useEffect(() => {
     fetchLoginDataLogInUser();
-  }, []);
+  }, [page]);
 
   const [createLeadForm, setCreateLeadForm] = useState({
     remarks: "",
     imei: "",
     is_converted: false,
   });
-
-  console.log("createLeadForm", createLeadForm);
-
-  // const handleView = async (row) => {
-  //   try {
-  //     const res = await getLeadData(row?.id);
-  //   } catch (error) {
-  //     console.log("error", error);
-  //   }
-  // };
 
   const handleAddLead = async (row) => {
     setRowData(row);
@@ -104,7 +100,6 @@ const SurveyFormUser = () => {
       token_id: rowData?.id,
     };
 
-    console.log("data", data);
     try {
       const res = await createLead(data);
       if (res.status === true) {
@@ -202,7 +197,8 @@ const SurveyFormUser = () => {
   ];
 
   const tableData = userData.map((item, index) => ({
-    srno: index + 1,
+    // srno: index + 1,
+    srno: ((metaData.current_page - 1) * metaData.per_page) + index + 1,
     created_at: moment(item.created_at).format("DD-MM-YYYY HH:mm A"),
     consumer_name: item.consumer_name || "-",
     contact_number: item.contact_number || "-",
@@ -211,61 +207,79 @@ const SurveyFormUser = () => {
     query: item.query || "-",
     type: item.type || "-",
     isCreated: item.isCreated ? "Updated" : "Not Updated",
-
-    // These fields exist in data but NOT shown in UI
     lead_status: item.leads?.is_converted ? "Converted" : "Not Converted",
     lead_created_on: item.leads?.created_at
       ? moment(item.leads.created_at).format("DD-MM-YYYY HH:mm A")
       : "-",
     imei: item.leads?.imei || "-",
     remarks: item.leads?.remarks || "-",
-
-    // Keep original for actions
     id: item.id,
     leads: item.leads,
   }));
 
-  const trackLeadData = async () => {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
     try {
-      const res = await trackData();
-      console.log(res);
-    } catch (error) {
-      console.log("error", error);
+      const res = await exportSurveyReport(token);
+
+      const blob = new Blob([res.data], {
+        type: res.headers["content-type"] || "application/octet-stream"
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Survey_Report_${moment().format("DD-MM-YYYY_HHmm")}.xlsx`;
+      link.click();
+
+      window.URL.revokeObjectURL(url);
+      toast.success("Export completed!");
+    } catch (err) {
+      console.error(err)
+      toast.error("Export failed");
+    } finally {
+      setExporting(false);
     }
   };
 
-  useEffect(() => {
-    trackLeadData();
-  }, []);
+
 
   return (
     <div className="">
       <div className="flex items-center lg:justify-between mb-5 lg:flex-nowrap flex-wrap justify-center gap-5">
         <h2 className="text-xl font-semibold ml-10">
           Survey Data{" "}
-          <span
-            className="ml-2 text-green-700"
-            onClick={fetchLoginDataLogInUser}
-          >
-            <LoopIcon
-              className={isLoading ? "animate-spin scale-x-[-1]" : ""}
-            />
-          </span>
         </h2>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-5 flex-wrap justify-center">
           <UniversalButton
+            icon={<RefreshCw className={isLoading ? "animate-spin scale-x-[-1]" : ""} size="18px" />}
+            variant="secondary"
+            onClick={fetchLoginDataLogInUser}
+            label="Refresh"
+          />
+          {/* <UniversalButton
             icon={<FileSpreadsheet className="text-xs" size="18px" />}
             variant="secondary"
             onClick={() =>
               exportToExcel(exportOnlyColumns, tableData, `Survey_Data`)
             }
             label="Export Data"
+          /> */}
+          <UniversalButton
+            icon={<FileSpreadsheet className="text-xs" size="18px" />}
+            variant="secondary"
+            onClick={handleExport}
+            label="Export Data"
+            isLoading={exporting}
+            disabled={exporting}
           />
           <Capsule
             icon={FileSpreadsheet}
             label="Total Forms"
-            value={userData?.length}
+            value={metaData?.total || ""}
             variant="secondary"
             className="text-nowrap"
           />
@@ -284,10 +298,22 @@ const SurveyFormUser = () => {
         <DataTable
           data={tableData}
           columns={columns}
-          title="Survey Responses"
-          pageSize={15}
           showCheckbox={false}
           height="718px"
+          loading={isLoading}
+          totalRecords={metaData?.total || 0}
+          pageSize={pageSize}
+          currentPage={page}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          onSort={(key, direction) => {
+            // Add sorting if needed
+          }}
+          sortConfig={null}
+          showPageSizeDropdown={false}
         />
       )}
 
@@ -584,7 +610,7 @@ const SurveyFormUser = () => {
                   }));
                   setSelectedChip(null); // Reset chip selection
                 }}
-                className={`relative z-10 flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${!createLeadForm.is_converted
+                className={`relative z-10 flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center text-nowrap gap-2 ${!createLeadForm.is_converted
                   ? "text-white"
                   : "text-gray-700"
                   }`}

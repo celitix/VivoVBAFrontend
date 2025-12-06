@@ -1,362 +1,391 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { Dialog } from "primereact/dialog";
-import { Sidebar } from "primereact/sidebar";
-import { Toast } from "primereact/toast";
-import {
-  createModel,
-  updateModel,
-  deleteModel,
-  getDeletedModel,
-  restoreDeletedModel,
-  getModel,
-} from "@/apis/manageuser/manageuser"; // adjust path
-import UniversalButton from "@/components/common/UniversalButton";
+import { CheckCircle2, Smartphone, Mail, User, Send, RefreshCw, Sparkles, Phone, MessageCircle } from "lucide-react";
 import InputField from "@/components/common/InputField";
-import UniversalSkeleton from "@/components/common/UniversalSkeleton";
-import { Edit2 } from "react-feather";
-import { MdOutlineDeleteForever } from "react-icons/md";
-import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import { HiDevicePhoneMobile } from "react-icons/hi2";
-import { FiSearch } from "react-icons/fi";
+import UniversalTextArea from "../components/common/UniversalTextArea";
+import UniversalButton from "@/components/common/UniversalButton";
+import { InputOtp } from "primereact/inputotp";
+import DropdownWithSearch from "../components/common/DropdownWithSearch";
+import { saveSurveyForm, sendOtp, verifyOtp, getModelPublic } from "@/apis/manageuser/manageuser";
 
-export default function ManageModels() {
-  const [models, setModels] = useState([]);
-  const [deletedModels, setDeletedModels] = useState([]);
-  const [search, setSearch] = useState("");
-
-  const [showDialog, setShowDialog] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [modelName, setModelName] = useState("");
-  const [editId, setEditId] = useState(null);
-
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
-
-  const [showDeletedDrawer, setShowDeletedDrawer] = useState(false);
+const SurveyForm = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [token, setToken] = useState(null);
+  const [otpId, setOtpId] = useState(null);
+  const [timer, setTimer] = useState(0);
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [loadingOtp, setLoadingOtp] = useState(false);
+  const [loadingVerify, setLoadingVerify] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [modelList, setModelList] = useState([]);
+  const [isPurchase, setIsPurchase] = useState(null);
 
-  const toast = useRef(null);
+  const [formData, setFormData] = useState({
+    consumer_name: "",
+    contact_number: "",
+    email: "",
+    model: "",
+    query: "",
+    type: "",
+  });
 
-  const safeToast = (severity, summary, detail, life = 4000) => {
-    toast.current?.show({ severity, summary, detail, life });
-  };
+  const sourceOptions = [
+    { label: "Facebook", value: "Facebook" },
+    { label: "Instagram", value: "Instagram" },
+    { label: "YouTube", value: "YouTube" },
+  ];
+
+  useEffect(() => {
+    const urlToken = searchParams.get("token");
+    if (urlToken) setToken(urlToken);
+    else toast.error("Invalid link");
+  }, [searchParams]);
 
   const fetchModels = async () => {
     setLoading(true);
     try {
-      const res = await getModel();
-      setModels(res?.data || []);
+      const res = await getModelPublic();
+      if (res?.status) {
+        setModelList(res.data.map(m => ({ label: m.model, value: m.model })));
+      }
     } catch (err) {
-      console.error("fetchModels", err);
-      safeToast("error", "Failed to load models", err?.message || "Unexpected error");
+      toast.error("Failed to load models");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchDeletedModels = async () => {
-    try {
-      const res = await getDeletedModel();
-      setDeletedModels(res?.data || []);
-    } catch (err) {
-      console.error("fetchDeletedModels", err);
-      safeToast("error", "Failed to load deleted models", err?.message || "Unexpected error");
-    }
-  };
+  useEffect(() => { fetchModels(); }, []);
 
   useEffect(() => {
-    fetchModels();
-  }, []);
+    if (timer <= 0) return;
+    const t = setTimeout(() => setTimer(timer - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timer]);
 
-  const openAddDialog = () => {
-    setModelName("");
-    setEditMode(false);
-    setEditId(null);
-    setShowDialog(true);
-  };
-
-  const openEditDialog = (item) => {
-    setEditMode(true);
-    setModelName(item.model || "");
-    setEditId(item.id);
-    setShowDialog(true);
-  };
-
-  const handleSave = async () => {
-    if (!modelName?.trim()) {
-      safeToast("warn", "Validation", "Model name cannot be empty");
+  const handleSendOtp = async () => {
+    if (!/^\d{10}$/.test(formData.contact_number)) {
+      setErrors(prev => ({ ...prev, contact_number: "Enter valid 10-digit number" }));
       return;
     }
-    setActionLoading(true);
+    setLoadingOtp(true);
     try {
-      if (editMode) {
-        await updateModel({ id: editId, model: modelName });
-        safeToast("success", "Updated", "Model updated successfully");
-      } else {
-        await createModel({ model: modelName });
-        safeToast("success", "Created", "Model created successfully");
+      const res = await sendOtp({ mobile: formData.contact_number });
+      if (res?.status) {
+        toast.success("OTP sent!");
+        setOtpSent(true);
+        setOtpId(res.otpId);
+        setTimer(30);
       }
-      setShowDialog(false);
-      fetchModels();
     } catch (err) {
-      console.error("handleSave", err);
-      safeToast("error", "Save failed", err?.message || "Unexpected error");
+      toast.error("Failed to send OTP");
     } finally {
-      setActionLoading(false);
+      setLoadingOtp(false);
     }
   };
 
-  const handleDelete = (id) => {
-    setDeleteId(id);
-    setConfirmDelete(true);
-  };
-
-  const confirmDeleteAction = async () => {
-    setActionLoading(true);
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 5) return toast.error("Enter 5-digit OTP");
+    setLoadingVerify(true);
     try {
-      await deleteModel(deleteId);
-      safeToast("success", "Deleted", "Model deleted");
-      setConfirmDelete(false);
-      fetchModels();
-      // refresh deleted list if drawer open
-      if (showDeletedDrawer) fetchDeletedModels();
+      const res = await verifyOtp({ mobile: formData.contact_number, otp, otpId });
+      if (res?.status) {
+        setOtpVerified(true);
+        toast.success("Verified successfully!");
+      } else {
+        toast.error(res?.message || "Invalid OTP");
+      }
     } catch (err) {
-      console.error("confirmDeleteAction", err);
-      safeToast("error", "Delete failed", err?.message || "Unexpected error");
+      toast.error("Verification failed");
     } finally {
-      setActionLoading(false);
+      setLoadingVerify(false);
     }
   };
 
-  const handleRestore = async (id) => {
-    setActionLoading(true);
+  const validateAndSubmit = async () => {
+    const err = {};
+    if (!formData.consumer_name.trim()) err.consumer_name = "Name required";
+    if (!/^\d{10}$/.test(formData.contact_number)) err.contact_number = "Invalid mobile";
+    if (!formData.email.match(/^\S+@\S+\.\S+$/)) err.email = "Invalid email";
+    if (isPurchase === true && !formData.model) err.model = "Select model";
+    if (isPurchase === false && !formData.type.trim()) err.type = "Feedback required";
+    if (isPurchase === null) err.toggle = "Choose feedback type";
+    if (!otpVerified) err.contact_number = "Verify mobile number";
+
+    setErrors(err);
+    if (Object.keys(err).length > 0) return;
+
+    setSubmitting(true);
     try {
-      await restoreDeletedModel(id);
-      safeToast("success", "Restored", "Model restored successfully");
-      fetchDeletedModels();
-      fetchModels();
+      const res = await saveSurveyForm({ token, ...formData });
+      if (res?.status) {
+        toast.success("Thank you! Your response has been recorded.");
+        navigate("/thank-you", { replace: true, state: { email: formData.email } });
+      }
     } catch (err) {
-      console.error("handleRestore", err);
-      safeToast("error", "Restore failed", err?.message || "Unexpected error");
+      toast.error("Submission failed");
     } finally {
-      setActionLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const filteredModels = models.filter((m) =>
-    (m.model || "").toLowerCase().includes(search.toLowerCase())
-  );
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="text-center p-12 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50">
+          <h2 className="text-4xl font-bold text-red-600 mb-4">Invalid Link</h2>
+          <p className="text-gray-600 text-lg">This survey link is not valid or has expired.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <Toast ref={toast} />
-
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-800">Models Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Create, edit and restore models.</p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative w-72">
-            <InputField
-              placeholder="Search models..."
-              className="w-full"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              rightIcon={<FiSearch className="text-slate-400" />}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <UniversalButton
-              label="Deleted Models"
-              onClick={() => {
-                fetchDeletedModels();
-                setShowDeletedDrawer(true);
-              }}
-            />
-            <UniversalButton label="Add Model" onClick={openAddDialog} />
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+      {/* Floating Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{ y: [0, -30, 0], rotate: [0, 360] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-20 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ y: [0, 30, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-32 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ x: [-20, 20, -20] }}
+          transition={{ duration: 25, repeat: Infinity }}
+          className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-100/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
+        />
       </div>
 
-      {/* Content area */}
-      <div>
-        {loading ? (
-          <div className="grid grid-cols-1 gap-5 col-span-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 col-span-full">
-              {[...Array(8)].map((_, i) => (
-                <UniversalSkeleton key={i} height="7rem" width="100%" className="rounded-2xl" />
-              ))}
-            </div>
-          </div>
-        ) : filteredModels.length === 0 ? (
-          <div className="col-span-full text-center flex items-center justify-center text-slate-500 py-6 md:h-115 lg:h-120 xl:h-130 2xl:h-150 overflow-auto">
-            <div className="flex flex-col items-center justify-center w-full py-10 text-center text-slate-500">
-              <div className="flex items-center justify-center w-16 h-16 mb-3 rounded-2xl bg-slate-100 shadow-sm">
-                {/* search off icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-medium text-slate-600">No models Found</h2>
-              <p className="text-sm text-slate-400 mt-1">Try adjusting your search or adding a new model.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredModels.map((item) => (
+      <div className="relative z-10 container mx-auto px-4 py-12">
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+          {/* Left Side - Branding & Animation */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="hidden lg:block"
+          >
+            <div className="text-center space-y-8">
               <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-                className="p-4 rounded-2xl shadow-lg bg-white flex justify-between items-center"
+                animate={{ y: [0, -15, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               >
-                <div>
-                  <div className="text-sm text-slate-400">Model</div>
-                  <div className="text-lg font-medium text-slate-800">{item.model}</div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => openEditDialog(item)}
-                    className="p-2 rounded-lg bg-slate-50 hover:bg-indigo-50 transition border border-slate-100"
-                    aria-label="edit"
-                    title="Edit"
-                  >
-                    <Edit2 size={18} className="text-slate-600" />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 rounded-lg bg-red-50 hover:bg-red-100 transition border border-red-100"
-                    aria-label="delete"
-                    title="Delete"
-                  >
-                    <MdOutlineDeleteForever size={18} className="text-red-500" />
-                  </button>
-                </div>
+                <Phone className="w-32 h-32 mx-auto text-blue-600" />
               </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Add / Edit Dialog */}
-      <Dialog
-        header={editMode ? "Edit Model" : "Add Model"}
-        visible={showDialog}
-        style={{ width: "30rem" }}
-        onHide={() => setShowDialog(false)}
-        draggable={false}
-      >
-        <div className="flex flex-col gap-3">
-          <InputField
-            label={editMode ? "Update Model Name" : "Enter Model Name"}
-            value={modelName}
-            onChange={(e) => setModelName(e.target.value)}
-            placeholder="Enter model name"
-          />
-
-          <div className="flex justify-end gap-3 mt-2">
-            <UniversalButton label="Cancel" onClick={() => setShowDialog(false)} />
-            <UniversalButton
-              label={editMode ? "Update" : "Save"}
-              onClick={handleSave}
-            // disable while action running
-            />
-          </div>
-        </div>
-      </Dialog>
-
-      {/* Confirm Delete Dialog */}
-      <Dialog
-        header="Confirm Delete"
-        visible={confirmDelete}
-        style={{ width: "28rem" }}
-        onHide={() => setConfirmDelete(false)}
-        draggable={false}
-      >
-        <div className="flex flex-col items-center justify-center text-center px-4 py-3">
-          <CancelOutlinedIcon sx={{ fontSize: 64, color: "#f44336", mb: 1 }} />
-
-          <h2 className="text-[1.15rem] font-semibold text-gray-700 mb-2 flex gap-2 items-center">
-            Delete Model <HiDevicePhoneMobile />
-          </h2>
-
-          <p className="text-gray-600 text-sm mb-4">You are about to delete this model.</p>
-
-          <div className="bg-gray-100 text-gray-800 font-medium rounded-md px-3 py-2 mb-4 w-full text-center break-words">
-            {models.find((m) => m.id === deleteId)?.model || "Unnamed Model"}
-          </div>
-
-          <p className="text-gray-500 text-sm">
-            This action is <span className="font-semibold text-red-600">recoverable</span> (it will be moved to Deleted
-            Models).
-          </p>
-
-          <div className="flex justify-center gap-4 mt-5">
-            <UniversalButton label="Cancel" onClick={() => setConfirmDelete(false)} />
-            <UniversalButton
-              label="Delete"
-              onClick={confirmDeleteAction}
-              style={{ backgroundColor: "#dc2626" }}
-            />
-          </div>
-        </div>
-      </Dialog>
-
-      {/* Deleted Drawer */}
-      <Sidebar visible={showDeletedDrawer} position="right" onHide={() => setShowDeletedDrawer(false)}>
-        <div className="w-[420px] max-w-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Deleted Models</h2>
-            <div className="text-sm text-slate-500">{deletedModels.length} items</div>
-          </div>
-
-          <div className="space-y-3">
-            {deletedModels.length === 0 ? (
-              <div className="py-12 text-center text-slate-500">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-100 mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m2 0a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3l-1-2H8L7 5H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16z" />
-                  </svg>
-                </div>
-                <div className="text-sm">No deleted models</div>
+              <div>
+                <h1 className="text-5xl font-extrabold text-gray-800 leading-tight">
+                  We Value Your<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700">
+                    Feedback
+                  </span>
+                </h1>
+                <p className="text-xl text-gray-600 mt-6">
+                  Help us improve your experience with vivo products
+                </p>
               </div>
-            ) : (
-              deletedModels.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className="p-3 rounded-xl shadow-sm bg-white flex items-center justify-between"
-                >
-                  <div>
-                    <div className="text-sm text-slate-400">{new Date(item.deletedAt || Date.now()).toLocaleString()}</div>
-                    <div className="font-medium text-slate-800 break-words">{item.model}</div>
-                  </div>
 
-                  <div className="flex gap-2">
-                    <UniversalButton label="Restore" onClick={() => handleRestore(item.id)} />
+              <div className="flex justify-center gap-8 mt-10">
+                <div className="text-center">
+                  <Sparkles className="w-10 h-10 text-blue-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">Quick & Easy</p>
+                </div>
+                <div className="text-center">
+                  <MessageCircle className="w-10 h-10 text-indigo-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">Your Voice Matters</p>
+                </div>
+                <div className="text-center">
+                  <CheckCircle2 className="w-10 h-10 text-purple-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">Secure & Private</p>
+                </div>
+              </div>
+
+              <img src="/vivologonew.png" alt="vivo" className="h-16 mx-auto mt-12 opacity-90" />
+            </div>
+          </motion.div>
+
+          {/* Right Side - Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="lg:max-w-lg"
+          >
+            <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-8 md:p-10">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-800">Customer Feedback</h2>
+                <p className="text-gray-600 mt-2">Takes less than 2 minutes</p>
+              </div>
+
+              <div className="space-y-6">
+                {/* Form fields same as before but cleaner */}
+                <InputField
+                  label="Full Name"
+                  placeholder="Enter your name"
+                  value={formData.consumer_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, consumer_name: e.target.value }))}
+                  icon={<User className="w-5 h-5 text-gray-500" />}
+                  error={errors.consumer_name}
+                />
+
+                <div className="space-y-4">
+                  <InputField
+                    label="Mobile Number"
+                    type="tel"
+                    placeholder="98XXXXXXXX"
+                    value={formData.contact_number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_number: e.target.value }))}
+                    icon={<Smartphone className="w-5 h-5 text-gray-500" />}
+                    error={errors.contact_number}
+                    disabled={otpVerified}
+                  />
+
+                  {!otpVerified && otpSent ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-emerald-50 rounded-2xl p-6 border border-emerald-200"
+                    >
+                      <p className="text-center text-emerald-800 font-medium mb-4">Enter OTP</p>
+                      <div className="flex justify-center gap-3 mb-5">
+                        <InputOtp
+                          value={otp}
+                          onChange={(e) => setOtp(e.value)}
+                          length={5}
+                          integerOnly
+                          inputStyle={{ width: "3.2rem", height: "3.2rem", fontSize: "1.4rem", borderRadius: "12px" }}
+                        />
+                      </div>
+                      <UniversalButton
+                        label={loadingVerify ? "Verifying..." : "Verify OTP"}
+                        icon={loadingVerify ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                        onClick={handleVerifyOtp}
+                        disabled={loadingVerify || otp.length !== 5}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      />
+                      {timer > 0 ? (
+                        <p className="text-center text-xs text-gray-600 mt-3">Resend in {timer}s</p>
+                      ) : (
+                        <button onClick={handleSendOtp} className="block mx-auto mt-3 text-emerald-600 font-medium underline text-sm">
+                          Resend OTP
+                        </button>
+                      )}
+                    </motion.div>
+                  ) : !otpVerified ? (
+                    <UniversalButton
+                      label={loadingOtp ? "Sending..." : "Send OTP"}
+                      onClick={handleSendOtp}
+                      disabled={loadingOtp}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-emerald-600 font-semibold">
+                      <CheckCircle2 className="w-6 h-6" />
+                      Verified Successfully
+                    </div>
+                  )}
+                </div>
+
+                <InputField
+                  label="Email Address"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  icon={<Mail className="w-5 h-5 text-gray-500" />}
+                  error={errors.email}
+                />
+
+                <DropdownWithSearch
+                  label="Where did you hear about us?"
+                  placeholder="Select platform"
+                  value={formData.query}
+                  onChange={(v) => setFormData(prev => ({ ...prev, query: v }))}
+                  options={sourceOptions}
+                />
+
+                <div className="space-y-4">
+                  <label className="text-lg font-semibold text-gray-800">Feedback Type</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => { setIsPurchase(true); setFormData(prev => ({ ...prev, type: "" })); }}
+                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === true
+                        ? "border-blue-600 bg-blue-50 text-blue-700 shadow-md"
+                        : "border-gray-300 bg-gray-50 hover:border-blue-300"
+                        }`}
+                    >
+                      Purchase Inquiry
+                    </button>
+                    <button
+                      onClick={() => { setIsPurchase(false); setFormData(prev => ({ ...prev, model: "" })); }}
+                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === false
+                        ? "border-purple-600 bg-purple-50 text-purple-700 shadow-md"
+                        : "border-gray-300 bg-gray-50 hover:border-purple-300"
+                        }`}
+                    >
+                      General Feedback
+                    </button>
                   </div>
-                </motion.div>
-              ))
-            )}
-          </div>
+                </div>
+
+                {isPurchase === true && (
+                  <DropdownWithSearch
+                    label="Interested Model"
+                    placeholder="Choose vivo model"
+                    value={formData.model}
+                    onChange={(v) => setFormData(prev => ({ ...prev, model: v }))}
+                    options={modelList}
+                    loading={loading}
+                  />
+                )}
+
+                {isPurchase === false && (
+                  <UniversalTextArea
+                    label="Your Feedback"
+                    placeholder="Share your thoughts..."
+                    value={formData.type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                    rows={4}
+                  />
+                )}
+
+                <UniversalButton
+                  label={submitting ? "Submitting..." : "Submit Feedback"}
+                  icon={<Send className="w-5 h-5" />}
+                  onClick={validateAndSubmit}
+                  disabled={submitting}
+                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-xl"
+                />
+              </div>
+
+              <div className="mt-10 pt-8 border-t border-gray-200 text-center">
+                <img src="/vivologonew.png" alt="vivo" className="h-14 mx-auto mb-4" />
+                <p className="text-lg font-bold text-gray-800">Yingjia Communication Pvt. Ltd.</p>
+                <p className="text-sm text-gray-600">
+                  Official Partner • Powered by <span className="font-bold text-blue-600">vivo</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-5">
+                  © {new Date().getFullYear()} All rights reserved.
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </Sidebar>
+      </div>
     </div>
   );
-}
+};
+
+export default SurveyForm;
