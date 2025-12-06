@@ -222,7 +222,7 @@ const SurveyFormReport = () => {
     consumer_name: item.consumer_name || "-",
     contact_number: item.contact_number || "-",
     email: item.email || "-",
-    model: item.model || "-",
+    model: item.model?.model || "-",
     query: item.query || "-",
     type: item.type || "-",
     isCreated: item.isCreated ? "Updated" : "Not Updated",
@@ -321,7 +321,7 @@ const SurveyFormReport = () => {
         <div className="">
           <UniversalSkeleton
             width="100%"
-            height="80vh"
+            height="644px"
             className="rounded-2xl"
           />
         </div>
@@ -330,7 +330,7 @@ const SurveyFormReport = () => {
           data={tableData}
           columns={columns}
           showCheckbox={false}
-          height="718px"
+          height="644px"
           loading={loading}
           totalRecords={meta.total}
           pageSize={pageSize}

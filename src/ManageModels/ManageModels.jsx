@@ -235,27 +235,35 @@ export default function ManageModels() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center flex-wrap gap-4 md:flex-nowrap">
-                <h1 className="text-2xl font-semibold flex md:justify-start justify-center w-full text-nowrap pl-10">Models Management</h1>
-                <div className="space-x-2 flex flex-wrap md:flex-nowrap gap-2 items-center justify-center">
-                    <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium
-        transition-all duration-200 cursor-pointer select-none  bg-slate-200 text-slate-800 text-nowrap" >
-                        <HiDevicePhoneMobile /> Total Models &nbsp;
+            <div className="border-b border-gray-200 pb-3 mb-4 flex items-center justify-center text-center flex-wrap gap-4 md:flex-nowrap">
+                <div
+                    className="mainlabel"
+                    style={{ width: "max-content !important" }}
+                >
+                    Manage Models
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium
+        transition-all duration-200 cursor-pointer select-none  bg-blue-100 text-blue-800 text-nowrap shadow-xl">
+                    <HiDevicePhoneMobile /> Total Models &nbsp;
 
-                        {filteredModels.length}
-                    </div>
-                    <UniversalButton label="Deleted Models" onClick={() => { fetchDeletedModels(); setShowDeletedDrawer(true); }} />
-                    <UniversalButton label="Add Model" onClick={openAddDialog} />
+                    {filteredModels.length}
                 </div>
             </div>
 
-            <InputField
-                label='Search Model'
-                placeholder="Search models..."
-                className="w-full p-inputtext-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="space-x-2 flex flex-wrap md:flex-nowrap gap-2 items-end justify-center">
+                <div className="md:flex-1 w-full">
+                    <InputField
+                        label='Search Model'
+                        placeholder="Search models..."
+                        className="w-full p-inputtext-sm"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+
+                <UniversalButton label="Deleted Models" onClick={() => { fetchDeletedModels(); setShowDeletedDrawer(true); }} />
+                <UniversalButton label="Add Model" onClick={openAddDialog} />
+            </div>
 
 
             <div>

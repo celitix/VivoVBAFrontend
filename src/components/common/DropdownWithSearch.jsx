@@ -1,18 +1,16 @@
 import React from "react";
 import Select, { components } from "react-select";
+import CustomTooltip from "./CustomTooltip";
 import { AiOutlineInfoCircle } from "react-icons/ai";
 import { BsCheck } from "react-icons/bs";
 import { BsChevronDown } from "react-icons/bs";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
-import CustomTooltip from "./CustomTooltip";
 
 const DropdownWithSearch = ({
   id,
   name,
   value = null,
   onChange,
-  error = false,
-  errorText = "",
   label,
   tooltipContent = "",
   tooltipPlacement = "top",
@@ -36,7 +34,7 @@ const DropdownWithSearch = ({
       backgroundColor: "white",
       color: "black",
       borderRadius: "7px",
-      border: error ? "1px solid #f87171" : "1px solid #ccc",
+      border: "1px solid #ccc",
       fontSize: "0.9rem",
       focus: "none",
       boxShadow: "none",
@@ -55,7 +53,6 @@ const DropdownWithSearch = ({
       backgroundColor: state.isSelected ? "#DDE7EE" : "white",
       color: state.isSelected ? "black" : "black",
       cursor: "pointer",
-      width: "100%",
     }),
     menuPortal: (base) => ({
       ...base,
@@ -114,13 +111,9 @@ const DropdownWithSearch = ({
         menuShouldBlockScroll={true} // Prevent scroll bleed
         closeMenuOnScroll={true} //  Auto-close on scroll
         closeMenuOnSelect={true} //  Close when selecting
-
       />
-      {error && (
-        <p className="mt-1 text-xs text-red-500 font-medium animate-fadeIn">
-          {errorText}
-        </p>
-      )}
+   
+
     </div>
   );
 };

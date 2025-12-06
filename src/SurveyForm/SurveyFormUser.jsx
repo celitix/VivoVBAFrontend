@@ -47,6 +47,7 @@ const SurveyFormUser = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openAddLeadDialog, setOpenAddLeadDialog] = useState(false);
   const [rowData, setRowData] = useState(null);
+  console.log(rowData)
   const [userData, setUserData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedChip, setSelectedChip] = useState("");
@@ -203,7 +204,7 @@ const SurveyFormUser = () => {
     consumer_name: item.consumer_name || "-",
     contact_number: item.contact_number || "-",
     email: item.email || "-",
-    model: item.model || "-",
+    model: item.model?.model || "-",
     query: item.query || "-",
     type: item.type || "-",
     isCreated: item.isCreated ? "Updated" : "Not Updated",
@@ -243,8 +244,6 @@ const SurveyFormUser = () => {
       setExporting(false);
     }
   };
-
-
 
   return (
     <div className="">

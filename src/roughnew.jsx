@@ -3,24 +3,14 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { InputOtp } from "primereact/inputotp";
 import { motion } from "framer-motion";
-import {
-    CheckCircle2,
-    Smartphone,
-    Mail,
-    User,
-    Send,
-    RefreshCw,
-    Sparkles,
-    Phone,
-    MessageCircle,
-} from "lucide-react";
+import { CheckCircle2, Smartphone, Mail, User, Send, RefreshCw, Sparkles, Phone, MessageCircle } from "lucide-react";
 
 import {
     saveSurveyForm,
     sendOtp,
     verifyOtp,
     getModel,
-    getModelPublic,
+    getModelPublic
 } from "@/apis/manageuser/manageuser";
 
 import UniversalTextArea from "@/components/common/UniversalTextArea";
@@ -45,15 +35,7 @@ const SurveyForm = () => {
     const [loading, setLoading] = useState(true);
     const [modelList, setModelList] = useState([]);
     const [toggleValue, setToggleValue] = useState(false);
-    const [isPurchase, setIsPurchase] = useState(true);
-
-    useEffect(() => {
-        if (isPurchase) {
-            setFormData((prev) => ({ ...prev, type: "" }));
-        } else {
-            setFormData((prev) => ({ ...prev, model: "" }));
-        }
-    }, [isPurchase]);
+    const [isPurchase, setIsPurchase] = useState(null);
 
     const [formData, setFormData] = useState({
         consumer_name: "",
@@ -201,7 +183,7 @@ const SurveyForm = () => {
 
         const name = (formData.consumer_name || "").trim();
         const contact = (formData.contact_number || "").trim();
-        // const email = (formData.email || "").trim();
+        const email = (formData.email || "").trim();
         // const model = (formData.model || "").trim();
         const query = (formData.query || "").trim();
         const type = (formData.type || "").trim();
@@ -211,9 +193,9 @@ const SurveyForm = () => {
         else if (!/^\d{10}$/.test(contact))
             newErrors.contact_number = "Invalid mobile number";
 
-        // if (!email) newErrors.email = "Email is required";
-        // else if (!/^\S+@\S+\.\S+$/.test(email))
-        //     newErrors.email = "Invalid email";
+        if (!email) newErrors.email = "Email is required";
+        else if (!/^\S+@\S+\.\S+$/.test(email))
+            newErrors.email = "Invalid email";
 
         // if (!model && toggleValue) newErrors.model = "Model is required";
         if (!query && toggleValue) newErrors.query = "Query is required";
@@ -228,6 +210,7 @@ const SurveyForm = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Proper form submit — prevents page reload
     const onSubmit = async (e) => {
         if (!validateForm() || !token) return;
 
@@ -256,38 +239,6 @@ const SurveyForm = () => {
         }
     };
 
-    const validateAndSubmit = async () => {
-        const err = {};
-        if (!formData.consumer_name.trim()) err.consumer_name = "Name required";
-        if (!/^\d{10}$/.test(formData.contact_number))
-            err.contact_number = "Invalid mobile";
-        if (!formData.email.match(/^\S+@\S+\.\S+$/)) err.email = "Invalid email";
-        if (isPurchase === true && !formData.model) err.model = "Select model";
-        if (isPurchase === false && !formData.type.trim())
-            err.type = "Feedback required";
-        if (isPurchase === null) err.toggle = "Choose feedback type";
-        if (!otpVerified) err.contact_number = "Verify mobile number";
-
-        setErrors(err);
-        if (Object.keys(err).length > 0) return;
-
-        setSubmitting(true);
-        try {
-            const res = await saveSurveyForm({ token, ...formData });
-            if (res?.status) {
-                toast.success("Thank you! Your response has been recorded.");
-                navigate("/thank-you", {
-                    replace: true,
-                    state: { email: formData.email },
-                });
-            }
-        } catch (err) {
-            toast.error("Submission failed");
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
     if (!token) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -303,7 +254,7 @@ const SurveyForm = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
-            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none">
                 <motion.div
                     animate={{ y: [0, -30, 0], rotate: [0, 360] }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -505,20 +456,15 @@ const SurveyForm = () => {
                         <div className="text-center space-y-8">
                             <motion.div
                                 animate={{ y: [0, -15, 0] }}
-                                transition={{
-                                    duration: 6,
-                                    repeat: Infinity,
-                                    ease: "easeInOut",
-                                }}
+                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                             >
                                 <Phone className="w-32 h-32 mx-auto text-blue-600" />
                             </motion.div>
 
                             <div>
-                                <h1 className="text-6xl font-extrabold text-gray-800 leading-tight playf">
-                                    We Value Your
-                                    <br />
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700 playf">
+                                <h1 className="text-5xl font-extrabold text-gray-800 leading-tight">
+                                    We Value Your<br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700">
                                         Feedback
                                     </span>
                                 </h1>
@@ -530,21 +476,15 @@ const SurveyForm = () => {
                             <div className="flex justify-center gap-8 mt-10">
                                 <div className="text-center">
                                     <Sparkles className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-                                    <p className="text-sm font-medium text-gray-700">
-                                        Quick & Easy
-                                    </p>
+                                    <p className="text-sm font-medium text-gray-700">Quick & Easy</p>
                                 </div>
                                 <div className="text-center">
                                     <MessageCircle className="w-10 h-10 text-indigo-600 mx-auto mb-2" />
-                                    <p className="text-sm font-medium text-gray-700">
-                                        Your Voice Matters
-                                    </p>
+                                    <p className="text-sm font-medium text-gray-700">Your Voice Matters</p>
                                 </div>
                                 <div className="text-center">
                                     <CheckCircle2 className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-                                    <p className="text-sm font-medium text-gray-700">
-                                        Secure & Private
-                                    </p>
+                                    <p className="text-sm font-medium text-gray-700">Secure & Private</p>
                                 </div>
                             </div>
 
@@ -559,14 +499,9 @@ const SurveyForm = () => {
                         transition={{ duration: 0.8 }}
                         className="lg:max-w-lg"
                     >
-                        <div className="flex items-center justify-center relative">
-                            <div className="h-1.5 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 w-[99.4%] absolute z-[9999] top-0 rounded-t-full" />
-                        </div>
-                        <div className="bg-white/95 backdrop-blur-2xl rounded-t-2xl rounded-b-3xl shadow-2xl border border-white/60 p-8 md:p-10  ">
+                        <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-8 md:p-10">
                             <div className="text-center mb-8">
-                                <h2 className="text-4xl font-bold text-gray-800 playf">
-                                    Customer Feedback
-                                </h2>
+                                <h2 className="text-3xl font-bold text-gray-800">Customer Feedback</h2>
                                 <p className="text-gray-600 mt-2">Takes less than 2 minutes</p>
                             </div>
 
@@ -576,12 +511,7 @@ const SurveyForm = () => {
                                     label="Full Name"
                                     placeholder="Enter your name"
                                     value={formData.consumer_name}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            consumer_name: e.target.value,
-                                        }))
-                                    }
+                                    onChange={(e) => setFormData(prev => ({ ...prev, consumer_name: e.target.value }))}
                                     icon={<User className="w-5 h-5 text-gray-500" />}
                                     error={errors.consumer_name}
                                 />
@@ -592,12 +522,7 @@ const SurveyForm = () => {
                                         type="tel"
                                         placeholder="98XXXXXXXX"
                                         value={formData.contact_number}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                contact_number: e.target.value,
-                                            }))
-                                        }
+                                        onChange={(e) => setFormData(prev => ({ ...prev, contact_number: e.target.value }))}
                                         icon={<Smartphone className="w-5 h-5 text-gray-500" />}
                                         error={errors.contact_number}
                                         disabled={otpVerified}
@@ -609,45 +534,27 @@ const SurveyForm = () => {
                                             animate={{ opacity: 1, scale: 1 }}
                                             className="bg-emerald-50 rounded-2xl p-6 border border-emerald-200"
                                         >
-                                            <p className="text-center text-emerald-800 font-medium mb-4">
-                                                Enter OTP
-                                            </p>
+                                            <p className="text-center text-emerald-800 font-medium mb-4">Enter OTP</p>
                                             <div className="flex justify-center gap-3 mb-5">
                                                 <InputOtp
                                                     value={otp}
                                                     onChange={(e) => setOtp(e.value)}
                                                     length={5}
                                                     integerOnly
-                                                    inputStyle={{
-                                                        width: "3.2rem",
-                                                        height: "3.2rem",
-                                                        fontSize: "1.4rem",
-                                                        borderRadius: "12px",
-                                                    }}
+                                                    inputStyle={{ width: "3.2rem", height: "3.2rem", fontSize: "1.4rem", borderRadius: "12px" }}
                                                 />
                                             </div>
                                             <UniversalButton
                                                 label={loadingVerify ? "Verifying..." : "Verify OTP"}
-                                                icon={
-                                                    loadingVerify ? (
-                                                        <RefreshCw className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <CheckCircle2 className="w-5 h-5" />
-                                                    )
-                                                }
+                                                icon={loadingVerify ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
                                                 onClick={handleVerifyOtp}
                                                 disabled={loadingVerify || otp.length !== 5}
                                                 className="w-full bg-emerald-600 hover:bg-emerald-700"
                                             />
                                             {timer > 0 ? (
-                                                <p className="text-center text-xs text-gray-600 mt-3">
-                                                    Resend in {timer}s
-                                                </p>
+                                                <p className="text-center text-xs text-gray-600 mt-3">Resend in {timer}s</p>
                                             ) : (
-                                                <button
-                                                    onClick={handleSendOtp}
-                                                    className="block mx-auto mt-3 text-emerald-600 font-medium underline text-sm"
-                                                >
+                                                <button onClick={handleSendOtp} className="block mx-auto mt-3 text-emerald-600 font-medium underline text-sm">
                                                     Resend OTP
                                                 </button>
                                             )}
@@ -672,36 +579,24 @@ const SurveyForm = () => {
                                     type="email"
                                     placeholder="you@example.com"
                                     value={formData.email}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, email: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                                     icon={<Mail className="w-5 h-5 text-gray-500" />}
+                                    error={errors.email}
                                 />
 
                                 <DropdownWithSearch
                                     label="Where did you hear about us?"
                                     placeholder="Select platform"
                                     value={formData.query}
-                                    onChange={(v) =>
-                                        setFormData((prev) => ({ ...prev, query: v }))
-                                    }
+                                    onChange={(v) => setFormData(prev => ({ ...prev, query: v }))}
                                     options={souceList}
-                                    error={errors.query}
-                                    errorText={errors.query}
-                                    menuPortalTarget={document.body}
-                                    menuPosition="fixed"
                                 />
 
                                 <div className="space-y-4">
-                                    <label className="text- font-semibold text-gray-800">
-                                        Feedback Type
-                                    </label>
+                                    <label className="text-lg font-semibold text-gray-800">Feedback Type</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
-                                            onClick={() => {
-                                                setIsPurchase(true);
-                                                setFormData((prev) => ({ ...prev, type: "" }));
-                                            }}
+                                            onClick={() => { setIsPurchase(true); setFormData(prev => ({ ...prev, type: "" })); }}
                                             className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === true
                                                 ? "border-blue-600 bg-blue-50 text-blue-700 shadow-md"
                                                 : "border-gray-300 bg-gray-50 hover:border-blue-300"
@@ -710,10 +605,7 @@ const SurveyForm = () => {
                                             Purchase Inquiry
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setIsPurchase(false);
-                                                setFormData((prev) => ({ ...prev, model: "" }));
-                                            }}
+                                            onClick={() => { setIsPurchase(false); setFormData(prev => ({ ...prev, model: "" })); }}
                                             className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === false
                                                 ? "border-purple-600 bg-purple-50 text-purple-700 shadow-md"
                                                 : "border-gray-300 bg-gray-50 hover:border-purple-300"
@@ -729,15 +621,9 @@ const SurveyForm = () => {
                                         label="Interested Model"
                                         placeholder="Choose vivo model"
                                         value={formData.model}
-                                        onChange={(v) =>
-                                            setFormData((prev) => ({ ...prev, model: v }))
-                                        }
-
-
+                                        onChange={(v) => setFormData(prev => ({ ...prev, model: v }))}
                                         options={modelList}
                                         loading={loading}
-
-
                                     />
                                 )}
 
@@ -746,9 +632,7 @@ const SurveyForm = () => {
                                         label="Your Feedback"
                                         placeholder="Share your thoughts..."
                                         value={formData.type}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({ ...prev, type: e.target.value }))
-                                        }
+                                        onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
                                         rows={4}
                                     />
                                 )}
@@ -756,25 +640,19 @@ const SurveyForm = () => {
                                 <UniversalButton
                                     label={submitting ? "Submitting..." : "Submit Feedback"}
                                     icon={<Send className="w-5 h-5" />}
-                                    // onClick={onSubmit}
-                                    onClick={validateAndSubmit}
+                                    // onClick={validateAndSubmit}
+                                    onClick={onSubmit}
+
                                     disabled={submitting}
                                     className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-xl"
                                 />
                             </div>
 
                             <div className="mt-10 pt-8 border-t border-gray-200 text-center">
-                                <img
-                                    src="/vivologonew.png"
-                                    alt="vivo"
-                                    className="h-14 mx-auto mb-4"
-                                />
-                                <p className="text-lg font-bold text-gray-800">
-                                    Yingjia Communication Pvt. Ltd.
-                                </p>
+                                <img src="/vivologonew.png" alt="vivo" className="h-14 mx-auto mb-4" />
+                                <p className="text-lg font-bold text-gray-800">Yingjia Communication Pvt. Ltd.</p>
                                 <p className="text-sm text-gray-600">
-                                    Official Partner • Powered by{" "}
-                                    <span className="font-bold text-blue-600">vivo</span>
+                                    Official Partner • Powered by <span className="font-bold text-blue-600">vivo</span>
                                 </p>
                                 <p className="text-xs text-gray-400 mt-5">
                                     © {new Date().getFullYear()} All rights reserved.

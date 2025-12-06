@@ -1,54 +1,9 @@
-// import React from 'react';
-// import { CheckCircle } from 'lucide-react';
-// import Lottie from "lottie-react";
-// import thankyou from "@/assets/animation/thankyou.json";
-
-// const ThankYou = () => {
-//     return (
-//         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
-//             <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 text-center">
-//                 <div className="mx-auto w-54 h-auto">
-//                     {/* <CheckCircle className="w-full h-full text-emerald-600" strokeWidth={3} /> */}
-//                     <Lottie
-//                         animationData={thankyou}
-//                         loop
-//                         autoplay
-//                         className="w-full h-full"
-//                     />
-//                 </div>
-
-//                 <h1 className="text-4xl font-bold text-gray-800 mb-4">
-//                     Thank You!
-//                 </h1>
-
-//                 <p className="text-lg text-gray-600 leading-relaxed mb-6">
-//                     Your feedback has been successfully submitted. We truly value your input and are committed to improving our services based on your experience.
-//                 </p>
-//                 <div className="bg-[#415eff3d] border border-[#415FFF] rounded-xl p-6 mb-6">
-//                     <p className="text-[#415FFF] font-medium">
-//                         Our team will review your response and get back to you if needed.
-//                     </p>
-//                 </div>
-
-//                 <p className="text-sm text-gray-500">
-//                     Have a wonderful day!
-//                 </p>
-//                 <p className='text-sm font-semibold mt-2'>
-//                     “Yingjia Communication Pvt. Ltd.”
-//                 </p>
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default ThankYou;
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Sparkles } from 'lucide-react';
 import Lottie from 'lottie-react';
-import thankyou from '@/assets/animation/thankyou.json';
 import { useLocation } from 'react-router-dom';
+import thankyou from '@/assets/animation/thankyou.json';
 
 const ThankYou = () => {
     const { state } = useLocation();
@@ -129,8 +84,8 @@ const ThankYou = () => {
                                     <Sparkles className="w-5 h-5 text-blue-600" />
                                 </p>
 
-                                <div className="pt-8 border-t border-gray-200">
-                                    <p className="text-sm text-gray-500 mb-6">Wishing you a wonderful day!</p>
+                                <div className="pt-6 border-t border-gray-200">
+                                    <p className="text-sm text-gray-500 mb-4">Wishing you a wonderful day!</p>
 
                                     {/* Company Logo & Branding */}
                                     <div className="flex flex-col items-center gap-4">
