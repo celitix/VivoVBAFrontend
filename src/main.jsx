@@ -5,6 +5,7 @@ import { PrimeReactProvider } from "primereact/api";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import App from "./App.jsx";
 import { RoleProvider } from "@/context/CurrentRoleContext";
+import "./utils/chartjs-setup.js"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

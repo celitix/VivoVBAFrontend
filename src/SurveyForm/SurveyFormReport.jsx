@@ -394,7 +394,7 @@ const SurveyFormReport = () => {
               </h3>
 
               <p className="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed mb-8">
-                This feedback has not been converted into a lead.
+                This response has not been converted into a lead.
               </p>
 
               {/* <UniversalButton

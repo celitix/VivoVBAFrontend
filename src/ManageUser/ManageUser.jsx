@@ -10,6 +10,7 @@ import { FaLink } from "react-icons/fa6";
 import moment from "moment";
 import { FileSpreadsheet } from "lucide-react";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import { TbLockPassword } from "react-icons/tb";
 
 
 import DataTable from "@/components/common/DataTable";
@@ -26,6 +27,7 @@ import {
   getUserUniqueTokenLink,
   getUserFilledSurveyForms,
 } from "@/apis/manageuser/manageuser";
+import { updateUser, updateUserPassword } from "../apis/manageuser/manageuser";
 
 
 const ManageUser = () => {
@@ -37,6 +39,11 @@ const ManageUser = () => {
   const [userToken, setUserToken] = useState("");
 
   const navigate = useNavigate();
+
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [loadingPassword, setLoadingPassword] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
 
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -62,7 +69,7 @@ const ManageUser = () => {
 
     if (!mobile.trim()) return toast.error("Please enter Mobile No!");
     if (!email.trim()) return toast.error("Please enter email address!");
-    if (!password.trim()) return toast.error("Please enter user password!");
+    // if (!password.trim()) return toast.error("Please enter user password!");
 
     try {
       setLoadingAdd(true);
@@ -73,10 +80,10 @@ const ManageUser = () => {
           id: editData.id,
           name: name,
           email: email,
-          password: password,
+          // password: password,
           mobile: mobile,
         };
-        response = await createUser(payload);
+        response = await updateUser(payload);
       } else {
         const payload = {
           name: name,
@@ -144,6 +151,37 @@ const ManageUser = () => {
       password: row.password || "",
     });
     setAddUserDialog(true);
+  };
+
+  const handleUpdatePasswordSave = async () => {
+    if (!addUser.password.trim()) {
+      toast.error("Please enter a password!");
+      return;
+    }
+
+    try {
+      setLoadingPassword(true);
+
+      const payload = {
+        id: selectedUserId,
+        password: addUser.password,
+      };
+
+      const res = await updateUserPassword(payload);
+
+      if (res?.status) {
+        toast.success("Password updated successfully!");
+        setOpenPasswordDialog(false);
+        setAddUser({ name: "", mobile: "", email: "", password: "" });
+      } else {
+        toast.error(res?.message || "Failed to update password.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong.");
+    } finally {
+      setLoadingPassword(false);
+    }
   };
 
   const handleGenerateLink = async (row) => {
@@ -289,6 +327,16 @@ const ManageUser = () => {
             <CustomTooltip arrow title="Edit User Details" placement="top">
               <IconButton onClick={() => handleEdit(row)}>
                 <EditNoteIcon sx={{ fontSize: "1.2rem", color: "gray" }} />
+              </IconButton>
+            </CustomTooltip>
+            <CustomTooltip arrow title="Update password" placement="top">
+              <IconButton
+                onClick={() => {
+                  setSelectedUserId(row.id);
+                  setOpenPasswordDialog(true);
+                }}
+              >
+                <TbLockPassword sx={{ fontSize: "1.2rem", color: "gray" }} />
               </IconButton>
             </CustomTooltip>
 
@@ -461,17 +509,20 @@ const ManageUser = () => {
                       }))
                     }
                   />
-                  <InputField
-                    label="Password"
-                    placeholder="Enter Password"
-                    value={addUser.password}
-                    onChange={(e) =>
-                      setAddUser((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }))
-                    }
-                  />
+
+                  {!editMode && (
+                    <InputField
+                      label="Password"
+                      placeholder="Enter Password"
+                      value={addUser.password}
+                      onChange={(e) =>
+                        setAddUser((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                    />
+                  )}
                 </div>
               </div>
               <div className="flex justify-center">
@@ -495,6 +546,38 @@ const ManageUser = () => {
       </Dialog>
       {/* Add User End */}
 
+      {/* update user password start */}
+      <Dialog
+        header={"Update User Password"}
+        visible={openPasswordDialog}
+        className="w-full md:w-200"
+        onHide={() => {
+          setOpenPasswordDialog(false);
+          setAddUser({ name: "", mobile: "", email: "", password: "" });
+        }}
+        draggable={false}
+      >
+        <div className="space-y-4 w-full">
+          <InputField
+            label="New Password"
+            placeholder="Enter New Password"
+            value={addUser.password}
+            onChange={(e) =>
+              setAddUser((prev) => ({ ...prev, password: e.target.value }))
+            }
+          />
+
+          <div className="flex justify-center">
+            <UniversalButton
+              label={loadingPassword ? "Updating..." : "Update Password"}
+              onClick={handleUpdatePasswordSave}
+              disabled={loadingPassword}
+            />
+          </div>
+        </div>
+      </Dialog>
+
+      {/* update user password End */}
 
       {/* Delete User Start */}
       <Dialog

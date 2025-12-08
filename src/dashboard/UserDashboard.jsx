@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { trackData } from "../apis/manageuser/manageuser";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+// import {
+//   Chart as ChartJS,
+//   CategoryScale,
+//   LinearScale,
+//   BarElement,
+//   ArcElement,
+//   Tooltip,
+//   Legend,
+// } from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { motion } from "framer-motion";
 
@@ -26,14 +26,14 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend
-);
+// ChartJS.register(
+//   CategoryScale,
+//   LinearScale,
+//   BarElement,
+//   ArcElement,
+//   Tooltip,
+//   Legend
+// );
 
 const COLORS = [
   "#FF8A65",
@@ -54,7 +54,7 @@ const UserDashboard = () => {
     try {
       const res = await trackData();
       if (res.status === true) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        // await new Promise((resolve) => setTimeout(resolve, 3000));
         const serverData = res?.data?.data || res?.data || res;
         setTrackingData(serverData?.[0] || null);
         toast.success("Latest Metrics Loaded Successfully!");

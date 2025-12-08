@@ -3,15 +3,15 @@ import { motion } from "framer-motion";
 import { trackData } from "../apis/manageuser/manageuser";
 import { FaUserCheck } from "react-icons/fa";
 import { Bar, Pie, Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  BarElement,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-} from "chart.js";
+// import {
+//   Chart as ChartJS,
+//   BarElement,
+//   ArcElement,
+//   CategoryScale,
+//   LinearScale,
+//   Tooltip,
+//   Legend,
+// } from "chart.js";
 import { FaUsers, FaChartLine } from "react-icons/fa";
 
 import {
@@ -33,14 +33,14 @@ import toast from "react-hot-toast";
 import UniversalSkeleton from "../components/ui/UniversalSkeleton";
 
 // Register Chart.js components
-ChartJS.register(
-  BarElement,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend
-);
+// ChartJS.register(
+//   BarElement,
+//   ArcElement,
+//   CategoryScale,
+//   LinearScale,
+//   Tooltip,
+//   Legend
+// );
 
 const AdminDashboard = () => {
   const [selectTab, setSelectTab] = useState(0);

@@ -9,6 +9,21 @@ export const createUser = async (data) => {
   });
 };
 
+// user update
+export const updateUser = async (data) => {
+  return await fetchWithAuth(`/update`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+// update user password
+export const updateUserPassword = async (data) => {
+  return await fetchWithAuth(`/password`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
 export const getUserList = async (data) => {
   return await fetchWithAuth(`/allUsers`, {
     method: "GET",
