@@ -9,6 +9,7 @@ import { User, RefreshCw } from "lucide-react";
 import { FaLink } from "react-icons/fa6";
 import moment from "moment";
 import { FileSpreadsheet } from "lucide-react";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 
 
 import DataTable from "@/components/common/DataTable";
@@ -285,11 +286,11 @@ const ManageUser = () => {
       renderCell: ({ row }) => (
         <div className="flex gap-2 justify-start">
           <>
-            {/* <CustomTooltip arrow title="Edit User Details" placement="top">
+            <CustomTooltip arrow title="Edit User Details" placement="top">
               <IconButton onClick={() => handleEdit(row)}>
                 <EditNoteIcon sx={{ fontSize: "1.2rem", color: "gray" }} />
               </IconButton>
-            </CustomTooltip> */}
+            </CustomTooltip>
 
             <CustomTooltip arrow title="Delete User" placement="top">
               <IconButton onClick={() => handleDelete(row)}>

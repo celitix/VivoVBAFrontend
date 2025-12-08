@@ -61,7 +61,7 @@ const AdminDashboard = () => {
     try {
       const res = await trackData();
       if (res.status === true) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        // await new Promise((resolve) => setTimeout(resolve, 3000));
         setData(res.data);
         setMetaData(res.meta);
         toast.success("Latest Metrics Loaded Successfully!");
@@ -173,102 +173,102 @@ const AdminDashboard = () => {
     ],
   };
 
-  // const DashboardSkeleton = () => (
-  //   <div className="w-full p-6">
-  //     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-  //       {/* ---------------- LEFT MAIN PANEL SKELETON ---------------- */}
-  //       <div className="col-span-4 md:col-span-3 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-  //         {/* Dashboard Header Skeleton */}
-  //         <div className="flex items-center justify-between mb-8">
-  //           <UniversalSkeleton height="3rem" width="w-24" />
-  //           <UniversalSkeleton height="1.5rem" width="w-64" />
-  //         </div>
+  const DashboardSkeleton = () => (
+    <div className="w-full p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ---------------- LEFT MAIN PANEL SKELETON ---------------- */}
+        <div className="col-span-4 md:col-span-3 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+          {/* Dashboard Header Skeleton */}
+          <div className="flex items-center justify-between mb-8">
+            <UniversalSkeleton height="3rem" width="w-24" />
+            <UniversalSkeleton height="1.5rem" width="w-64" />
+          </div>
 
-  //         {/* Tabs Skeleton */}
-  //         <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
-  //           <div className="flex gap-4">
-  //             <UniversalSkeleton
-  //               height="2rem"
-  //               width="w-20"
-  //               className="rounded-full"
-  //             />
-  //             <UniversalSkeleton
-  //               height="2rem"
-  //               width="w-24"
-  //               className="rounded-full"
-  //             />
-  //             <UniversalSkeleton
-  //               height="2rem"
-  //               width="w-20"
-  //               className="rounded-full"
-  //             />
-  //             <UniversalSkeleton
-  //               height="2rem"
-  //               width="w-24"
-  //               className="rounded-full"
-  //             />
-  //           </div>
-  //           <UniversalSkeleton height="2rem" width="w-32" />
-  //         </div>
+          {/* Tabs Skeleton */}
+          <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
+            <div className="flex gap-4">
+              <UniversalSkeleton
+                height="2rem"
+                width="w-20"
+                className="rounded-full"
+              />
+              <UniversalSkeleton
+                height="2rem"
+                width="w-24"
+                className="rounded-full"
+              />
+              <UniversalSkeleton
+                height="2rem"
+                width="w-20"
+                className="rounded-full"
+              />
+              <UniversalSkeleton
+                height="2rem"
+                width="w-24"
+                className="rounded-full"
+              />
+            </div>
+            <UniversalSkeleton height="2rem" width="w-32" />
+          </div>
 
-  //         {/* Stats Cards Skeleton (Based on selectTab === 0 view) */}
-  //         <div className="mt-6 grid grid-cols-2 gap-6">
-  //           {/* Card 1 */}
-  //           <UniversalSkeleton
-  //             height="9rem"
-  //             width="w-full"
-  //             className="col-span-2 md:col-span-1"
-  //           />
-  //           {/* Card 2 */}
-  //           <UniversalSkeleton
-  //             height="9rem"
-  //             width="w-full"
-  //             className="col-span-2 md:col-span-1"
-  //           />
-  //         </div>
+          {/* Stats Cards Skeleton (Based on selectTab === 0 view) */}
+          <div className="mt-6 grid grid-cols-2 gap-6">
+            {/* Card 1 */}
+            <UniversalSkeleton
+              height="9rem"
+              width="w-full"
+              className="col-span-2 md:col-span-1"
+            />
+            {/* Card 2 */}
+            <UniversalSkeleton
+              height="9rem"
+              width="w-full"
+              className="col-span-2 md:col-span-1"
+            />
+          </div>
 
-  //         {/* Charts Skeleton */}
-  //         <div className="mt-8 grid grid-cols-2 gap-6">
-  //           {/* Chart 1 */}
-  //           <div className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1">
-  //             <UniversalSkeleton
-  //               height="1.5rem"
-  //               width="w-1/2"
-  //               className="mb-4"
-  //             />
-  //             <UniversalSkeleton height="10rem" width="w-full" />
-  //           </div>
-  //           {/* Chart 2 */}
-  //           <div className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1">
-  //             <UniversalSkeleton
-  //               height="1.5rem"
-  //               width="w-1/2"
-  //               className="mb-4"
-  //             />
-  //             <UniversalSkeleton height="10rem" width="w-full" />
-  //           </div>
-  //         </div>
+          {/* Charts Skeleton */}
+          <div className="mt-8 grid grid-cols-2 gap-6">
+            {/* Chart 1 */}
+            <div className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1">
+              <UniversalSkeleton
+                height="1.5rem"
+                width="w-1/2"
+                className="mb-4"
+              />
+              <UniversalSkeleton height="10rem" width="w-full" />
+            </div>
+            {/* Chart 2 */}
+            <div className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1">
+              <UniversalSkeleton
+                height="1.5rem"
+                width="w-1/2"
+                className="mb-4"
+              />
+              <UniversalSkeleton height="10rem" width="w-full" />
+            </div>
+          </div>
 
-  //         {/* Table/ModelResponse Skeleton (Example height) */}
-  //         <div className="mt-8">
-  //           <UniversalSkeleton height="2rem" width="w-full" className="mb-4" />
-  //           <UniversalSkeleton height="15rem" width="w-full" />
-  //         </div>
-  //       </div>
+          {/* Table/ModelResponse Skeleton (Example height) */}
+          <div className="mt-8">
+            <UniversalSkeleton height="2rem" width="w-full" className="mb-4" />
+            <UniversalSkeleton height="15rem" width="w-full" />
+          </div>
+        </div>
 
-  //       {/* ---------------- RIGHT PANEL SKELETON ---------------- */}
-  //       <div className="col-span-4 md:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col gap-6">
-  //         <UniversalSkeleton height="1.5rem" width="w-1/2" className="mb-2" />
+        {/* ---------------- RIGHT PANEL SKELETON ---------------- */}
+        <div className="col-span-4 md:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col gap-6">
+          <UniversalSkeleton height="1.5rem" width="w-1/2" className="mb-2" />
 
-  //         {/* Quick Insight Cards */}
-  //         <UniversalSkeleton height="5rem" width="w-full" />
-  //         <UniversalSkeleton height="5rem" width="w-full" />
-  //         <UniversalSkeleton height="5rem" width="w-full" />
-  //         <UniversalSkeleton height="5rem" width="w-full" />
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
+          {/* Quick Insight Cards */}
+          <UniversalSkeleton height="5rem" width="w-full" />
+          <UniversalSkeleton height="5rem" width="w-full" />
+          <UniversalSkeleton height="5rem" width="w-full" />
+          <UniversalSkeleton height="5rem" width="w-full" />
+        </div>
+      </div>
+    </div>
+  );
 
   const DynamicLoadingHeader = () => {
     const [currentStep, setCurrentStep] = useState(0);
@@ -338,17 +338,20 @@ const AdminDashboard = () => {
   return (
     <>
       {loading ? (
+        // <div className="min-h-screen flex items-center justify-center">
+        //   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        //     <motion.div
+        //       initial={{ scale: 0.9, opacity: 0 }}
+        //       animate={{ scale: 1, opacity: 1 }}
+        //       transition={{ type: "spring", stiffness: 100 }}
+        //       className="p-10 rounded-2xl bg-white shadow-2xl border border-gray-100"
+        //     >
+        //       <DynamicLoadingHeader />
+        //     </motion.div>
+        //   </motion.div>
+        // </div>
         <div className="min-h-screen flex items-center justify-center">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 100 }}
-              className="p-10 rounded-2xl bg-white shadow-2xl border border-gray-100"
-            >
-              <DynamicLoadingHeader />
-            </motion.div>
-          </motion.div>
+          <DashboardSkeleton />
         </div>
       ) : (
         <div className="w-full p-6">
@@ -370,11 +373,10 @@ const AdminDashboard = () => {
                       key={t.id}
                       onClick={() => setSelectTab(t.id)}
                       className={`relative px-4 py-1 text-lg font-medium transition-all duration-300 rounded-full z-10
-                  ${
-                    selectTab === t.id
-                      ? "text-white"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  ${selectTab === t.id
+                          ? "text-white"
+                          : "text-gray-500 hover:text-gray-700"
+                        }`}
                     >
                       {t.label}
 

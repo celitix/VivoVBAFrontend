@@ -79,6 +79,14 @@ export const exportSurveyReport = async (token) => {
     },
   });
 };
+export const exportSurveyReportUser = async () => {
+  return await axios.get(`/api/export`, {
+    responseType: "blob",
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+    },
+  });
+};
 
 //================ Survey form apis started ===============================
 

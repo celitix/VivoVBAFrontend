@@ -40,7 +40,7 @@ import InputField from "@/components/common/InputField";
 import UniversalTextArea from "@/components/common/UniversalTextArea";
 import UniversalRadioButton from "@/components/common/UniversalRadioButton";
 import UniversalSkeleton from "@/components/ui/UniversalSkeleton";
-import { exportSurveyReport, trackData } from "../apis/manageuser/manageuser";
+import { exportSurveyReport, exportSurveyReportUser, trackData } from "../apis/manageuser/manageuser";
 import toast from "react-hot-toast";
 
 const SurveyFormUser = () => {
@@ -223,7 +223,8 @@ const SurveyFormUser = () => {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await exportSurveyReport(token);
+      const token = ""
+      const res = await exportSurveyReportUser();
 
       const blob = new Blob([res.data], {
         type: res.headers["content-type"] || "application/octet-stream"
