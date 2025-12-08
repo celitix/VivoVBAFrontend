@@ -97,9 +97,24 @@ export const saveSurveyForm = async (data) => {
     return res.data;
   } catch (err) {
     console.error("Save Survey Error:", err);
-    return { status: false, message: "Server error" };
+    // return { status: false, message: "Server error" };
+    const errorMessage =
+      err?.response?.data?.message || err?.message || "Network request failed.";
+
+    throw { status: false, message: errorMessage };
   }
 };
+
+// Send OTP
+// export const sendOtp = async (data) => {
+//   try {
+//     const res = await api.post("/sendOtp", data);
+//     return res.data;
+//   } catch (err) {
+//     console.error("Send OTP Error:", err);
+//     return { status: false, message: "Server error" };
+//   }
+// };
 
 // Send OTP
 export const sendOtp = async (data) => {
@@ -108,10 +123,13 @@ export const sendOtp = async (data) => {
     return res.data;
   } catch (err) {
     console.error("Send OTP Error:", err);
-    return { status: false, message: "Server error" };
+
+    const errorMessage =
+      err?.response?.data?.message || err?.message || "Network request failed.";
+
+    throw { status: false, message: errorMessage };
   }
 };
-
 // Verify OTP
 export const verifyOtp = async (data) => {
   try {
@@ -119,7 +137,11 @@ export const verifyOtp = async (data) => {
     return res.data;
   } catch (err) {
     console.error("Verify OTP Error:", err);
-    return { status: false, message: "Server error" };
+    // return { status: false, message: "Server error" };
+    const errorMessage =
+      err?.response?.data?.message || err?.message || "Network request failed.";
+
+    throw { status: false, message: errorMessage };
   }
 };
 //================ Models Crud APIs ===============================

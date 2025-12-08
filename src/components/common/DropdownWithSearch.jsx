@@ -106,11 +106,11 @@ const DropdownWithSearch = ({
         isDisabled={disabled}
         styles={customStyles}
         components={{ DropdownIndicator }}
-        // menuPortalTarget={document.body} //  Render dropdown outside dialog
-        menuPosition="fixed" //  Position menu fixed
+        menuPortalTarget={document.body} // Render dropdown outside dialog
+        menuPosition="fixed" // Position menu fixed
         menuShouldBlockScroll={true} // Prevent scroll bleed
-        closeMenuOnScroll={true} //  Auto-close on scroll
-        closeMenuOnSelect={true} //  Close when selecting
+        closeMenuOnScroll={true} // Auto-close on scroll
+        closeMenuOnSelect={true} // Close when selecting
       />
    
 

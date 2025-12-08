@@ -1,386 +1,607 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { CheckCircle2, Smartphone, Mail, User, Send, RefreshCw, Sparkles, Phone, MessageCircle } from "lucide-react";
-import InputField from "@/components/common/InputField";
-import UniversalTextArea from "../components/common/UniversalTextArea";
+import { trackData } from "../apis/manageuser/manageuser";
+import { FaUserCheck } from "react-icons/fa";
+import { Bar, Pie, Doughnut } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  BarElement,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { FaUsers, FaChartLine } from "react-icons/fa";
+
+import { Grid, Card, CardContent, Typography } from "@mui/material";
+import Reports from "./AdminDashboardComponents/Reports";
+import ModelResponse from "./AdminDashboardComponents/ModelResponse";
+import { FaRegEnvelope } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
+import { FaMobileAlt } from "react-icons/fa";
+import { RefreshCw } from "lucide-react";
 import UniversalButton from "@/components/common/UniversalButton";
-import { InputOtp } from "primereact/inputotp";
-import DropdownWithSearch from "../components/common/DropdownWithSearch";
-import { saveSurveyForm, sendOtp, verifyOtp, getModelPublic } from "@/apis/manageuser/manageuser";
+import toast from "react-hot-toast";
 
-const SurveyForm = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const [token, setToken] = useState(null);
-  const [otpId, setOtpId] = useState(null);
-  const [timer, setTimer] = useState(0);
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [loadingOtp, setLoadingOtp] = useState(false);
-  const [loadingVerify, setLoadingVerify] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [modelList, setModelList] = useState([]);
-  const [isPurchase, setIsPurchase] = useState(null);
+// Register Chart.js components
+ChartJS.register(
+  BarElement,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+);
 
-  const [formData, setFormData] = useState({
-    consumer_name: "",
-    contact_number: "",
-    email: "",
-    model: "",
-    query: "",
-    type: "",
-  });
+const AdminDashboard = () => {
+  const [selectTab, setSelectTab] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([]);
+  const [modelData, setModelData] = useState([]);
+  const [metaData, setMetaData] = useState(null);
 
-  const sourceOptions = [
-    { label: "Facebook", value: "Facebook" },
-    { label: "Instagram", value: "Instagram" },
-    { label: "YouTube", value: "YouTube" },
+  const mainTabs = [
+    { id: 0, label: "Users" },
+    { id: 1, label: "Responses" },
+    { id: 2, label: "Leads" },
+    { id: 3, label: "Source" },
   ];
 
-  useEffect(() => {
-    const urlToken = searchParams.get("token");
-    if (urlToken) setToken(urlToken);
-    else toast.error("Invalid link");
-  }, [searchParams]);
-
-  const fetchModels = async () => {
+  const trackLeadData = async () => {
     setLoading(true);
     try {
-      const res = await getModelPublic();
-      if (res?.status) {
-        setModelList(res.data.map(m => ({ label: m.model, value: m.model })));
+      const res = await trackData();
+      if (res.status === true) {
+        setData(res.data);
+        setMetaData(res.meta);
+        toast.success("Latest Metrics Loaded Successfully!")
       }
-    } catch (err) {
-      toast.error("Failed to load models");
+    } catch (error) {
+      console.log("error", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchModels(); }, []);
+  useEffect(() => {
+    trackLeadData();
+  }, []);
+
+  console.log("loading", loading);
+  // ****************data seggregation ****************
 
   useEffect(() => {
-    if (timer <= 0) return;
-    const t = setTimeout(() => setTimer(timer - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timer]);
+    if (data) {
+      // Flatten all responses
+      const allResponses = data.flatMap((d) =>
+        d.responses.map((response) => ({
+          user_id: d.user_id,
+          user_name: d.user_name,
+          model: response.model,
+          total_responses: Number(response.total_responses || 0),
+          total_leads: Number(response.total_leads || 0),
+          total_conversions: Number(response.total_conversions || 0),
+        }))
+      );
 
-  const handleSendOtp = async () => {
-    if (!/^\d{10}$/.test(formData.contact_number)) {
-      setErrors(prev => ({ ...prev, contact_number: "Enter valid 10-digit number" }));
-      return;
+      // Aggregate counts by model
+      const aggregated = {};
+
+      allResponses.forEach((res) => {
+        if (!res.model) return; // skip empty model names
+
+        if (!aggregated[res.model]) {
+          aggregated[res.model] = { ...res }; // create a new object
+        } else {
+          // sum up the counts
+          aggregated[res.model].total_responses += res.total_responses;
+          aggregated[res.model].total_leads += res.total_leads;
+          aggregated[res.model].total_conversions += res.total_conversions;
+        }
+      });
+
+      const uniqueModelResponses = Object.values(aggregated);
+
+      setModelData(uniqueModelResponses);
     }
-    setLoadingOtp(true);
-    try {
-      const res = await sendOtp({ mobile: formData.contact_number });
-      if (res?.status) {
-        toast.success("OTP sent!");
-        setOtpSent(true);
-        setOtpId(res.otpId);
-        setTimer(30);
-      }
-    } catch (err) {
-      toast.error("Failed to send OTP");
-    } finally {
-      setLoadingOtp(false);
-    }
+  }, [data]);
+
+  // leads data
+  const leadsData = data.map((d) => d.leads_per_model);
+  const totalLeads = leadsData
+    .flat()
+    .reduce((acc, curr) => acc + (curr.total_leads || 0), 0);
+
+  //source data
+  const source = data.map((d) => d.responsesPerSource);
+
+  const flattened = source.flatMap((arr) => arr); // removes inner array layers
+
+  // Now filter counts
+  const instagramCount = flattened
+    .filter((item) => item?.source?.toLowerCase() === "instagram")
+    .reduce((sum, item) => sum + item.total_responses, 0);
+
+  const facebookCount = flattened
+    .filter((item) => item?.source?.toLowerCase() === "facebook")
+    .reduce((sum, item) => sum + item.total_responses, 0);
+
+  const youtubeCount = flattened
+    .filter((item) => item?.source?.toLowerCase() === "youtube")
+    .reduce((sum, item) => sum + item.total_responses, 0);
+
+  const sourceResponseData = {
+    labels: ["Facebook", "YouTube", "Instagram"],
+    datasets: [
+      {
+        label: "Lead Sources",
+        data: [facebookCount, youtubeCount, instagramCount],
+        backgroundColor: [
+          "rgba(59, 130, 246, 0.6)", // blue (facebook)
+          "rgba(239, 68, 68, 0.6)", // red (youtube)
+          "rgba(168, 85, 247, 0.6)", // purple (instagram)
+        ],
+        borderColor: [
+          "rgba(59, 130, 246, 1)",
+          "rgba(239, 68, 68, 1)",
+          "rgba(168, 85, 247, 1)",
+        ],
+        borderWidth: 2,
+        hoverOffset: 10,
+      },
+    ],
   };
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 5) return toast.error("Enter 5-digit OTP");
-    setLoadingVerify(true);
-    try {
-      const res = await verifyOtp({ mobile: formData.contact_number, otp, otpId });
-      if (res?.status) {
-        setOtpVerified(true);
-        toast.success("Verified successfully!");
-      } else {
-        toast.error(res?.message || "Invalid OTP");
-      }
-    } catch (err) {
-      toast.error("Verification failed");
-    } finally {
-      setLoadingVerify(false);
-    }
+  const modelResponseData = {
+    labels: modelData.map((item) => item.model), // X-axis → model names
+    datasets: [
+      {
+        label: "Total Responses",
+        data: modelData.map((item) => item.total_responses), // Y-axis → response count
+        backgroundColor: "#4F46E5",
+      },
+    ],
   };
-
-  const validateAndSubmit = async () => {
-    const err = {};
-    if (!formData.consumer_name.trim()) err.consumer_name = "Name required";
-    if (!/^\d{10}$/.test(formData.contact_number)) err.contact_number = "Invalid mobile";
-    if (!formData.email.match(/^\S+@\S+\.\S+$/)) err.email = "Invalid email";
-    if (isPurchase === true && !formData.model) err.model = "Select model";
-    if (isPurchase === false && !formData.type.trim()) err.type = "Feedback required";
-    if (isPurchase === null) err.toggle = "Choose feedback type";
-    if (!otpVerified) err.contact_number = "Verify mobile number";
-
-    setErrors(err);
-    if (Object.keys(err).length > 0) return;
-
-    setSubmitting(true);
-    try {
-      const res = await saveSurveyForm({ token, ...formData });
-      if (res?.status) {
-        toast.success("Thank you! Your response has been recorded.");
-        navigate("/thank-you", { replace: true, state: { email: formData.email } });
-      }
-    } catch (err) {
-      toast.error("Submission failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="text-center p-12 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50">
-          <h2 className="text-4xl font-bold text-red-600 mb-4">Invalid Link</h2>
-          <p className="text-gray-600 text-lg">This survey link is not valid or has expired.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div
-          animate={{ y: [0, -30, 0], rotate: [0, 360] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-20 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ y: [0, 30, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-32 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ x: [-20, 20, -20] }}
-          transition={{ duration: 25, repeat: Infinity }}
-          className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-100/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
-        />
-      </div>
+    <div className="w-full p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ---------------- LEFT MAIN PANEL ---------------- */}
+        <div className="col-span-4 md:col-span-3 bg-gray-50 p-6 rounded-xl shadow-sm">
+          {/* Dashboard Header */}
+          <div className="flex items-center md:justify-between mb-8 flex-wrap justify-center">
+            <img src="/vivologonew.png" alt="vivo" className="h-12" />
+            <h2 className="text-2xl font-semibold text-gray-700">
+              Yingjia Communication Pvt. Ltd.
+            </h2>
+          </div>
+          {/* Tabs */}
+          <div className="overflow-x-auto whitespace-nowrap scrollbar-thin flex justify-between">
+            <div className="flex gap-4 relative pb-2 w-max">
+              {mainTabs.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectTab(t.id)}
+                  className={`relative px-4 py-1 text-lg font-medium transition-all duration-300 rounded-full z-10
+                  ${
+                    selectTab === t.id
+                      ? "text-white"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {t.label}
 
-      <div className="relative z-10 container mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
-          {/* Left Side - Branding & Animation */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="hidden lg:block"
-          >
-            <div className="text-center space-y-8">
-              <motion.div
-                animate={{ y: [0, -15, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Phone className="w-32 h-32 mx-auto text-blue-600" />
-              </motion.div>
-
-              <div>
-                <h1 className="text-5xl font-extrabold text-gray-800 leading-tight">
-                  We Value Your<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700">
-                    Feedback
-                  </span>
-                </h1>
-                <p className="text-xl text-gray-600 mt-6">
-                  Help us improve your experience with vivo products
-                </p>
-              </div>
-
-              <div className="flex justify-center gap-8 mt-10">
-                <div className="text-center">
-                  <Sparkles className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-700">Quick & Easy</p>
-                </div>
-                <div className="text-center">
-                  <MessageCircle className="w-10 h-10 text-indigo-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-700">Your Voice Matters</p>
-                </div>
-                <div className="text-center">
-                  <CheckCircle2 className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-700">Secure & Private</p>
-                </div>
-              </div>
-
-              <img src="/vivologonew.png" alt="vivo" className="h-16 mx-auto mt-12 opacity-90" />
-            </div>
-          </motion.div>
-
-          {/* Right Side - Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="lg:max-w-lg"
-          >
-            <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-8 md:p-10">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800">Customer Feedback</h2>
-                <p className="text-gray-600 mt-2">Takes less than 2 minutes</p>
-              </div>
-
-              <div className="space-y-6">
-                {/* Form fields same as before but cleaner */}
-                <InputField
-                  label="Full Name"
-                  placeholder="Enter your name"
-                  value={formData.consumer_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, consumer_name: e.target.value }))}
-                  icon={<User className="w-5 h-5 text-gray-500" />}
-                  error={errors.consumer_name}
-                />
-
-                <div className="space-y-4">
-                  <InputField
-                    label="Mobile Number"
-                    type="tel"
-                    placeholder="98XXXXXXXX"
-                    value={formData.contact_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, contact_number: e.target.value }))}
-                    icon={<Smartphone className="w-5 h-5 text-gray-500" />}
-                    error={errors.contact_number}
-                    disabled={otpVerified}
-                  />
-
-                  {!otpVerified && otpSent ? (
+                  {/* Animated capsule */}
+                  {selectTab === t.id && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-emerald-50 rounded-2xl p-6 border border-emerald-200"
-                    >
-                      <p className="text-center text-emerald-800 font-medium mb-4">Enter OTP</p>
-                      <div className="flex justify-center gap-3 mb-5">
-                        <InputOtp
-                          value={otp}
-                          onChange={(e) => setOtp(e.value)}
-                          length={5}
-                          integerOnly
-                          inputStyle={{ width: "3.2rem", height: "3.2rem", fontSize: "1.4rem", borderRadius: "12px" }}
-                        />
-                      </div>
-                      <UniversalButton
-                        label={loadingVerify ? "Verifying..." : "Verify OTP"}
-                        icon={loadingVerify ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-                        onClick={handleVerifyOtp}
-                        disabled={loadingVerify || otp.length !== 5}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700"
-                      />
-                      {timer > 0 ? (
-                        <p className="text-center text-xs text-gray-600 mt-3">Resend in {timer}s</p>
-                      ) : (
-                        <button onClick={handleSendOtp} className="block mx-auto mt-3 text-emerald-600 font-medium underline text-sm">
-                          Resend OTP
-                        </button>
-                      )}
-                    </motion.div>
-                  ) : !otpVerified ? (
-                    <UniversalButton
-                      label={loadingOtp ? "Sending..." : "Send OTP"}
-                      onClick={handleSendOtp}
-                      disabled={loadingOtp}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      layoutId="tab-capsule"
+                      className="absolute inset-0 rounded-full z-[-1]"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)", // gradient color
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 30,
+                      }}
                     />
-                  ) : (
-                    <div className="flex items-center justify-center gap-2 text-emerald-600 font-semibold">
-                      <CheckCircle2 className="w-6 h-6" />
-                      Verified Successfully
-                    </div>
                   )}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center">
+              <UniversalButton
+                variant="secondary"
+                label={loading ? "Refreshing..." : "Refresh"}
+                disabled={loading}
+                icon={
+                  <RefreshCw
+                    className={loading ? "animate-spin scale-x-[-1]" : ""}
+                    size="18px"
+                  />
+                }
+                onClick={() => trackLeadData()}
+              />
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          {selectTab === 0 && (
+            <div className="mt-6 grid grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-2 md:col-span-1"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
+                }}
+              >
+                {/* Background Icon */}
+                <FaUsers
+                  size={80}
+                  className="absolute opacity-10 right-4 top-4 transform rotate-12"
+                />
+
+                {/* Top Bar Accent */}
+                <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
+
+                {/* Content */}
+                <div className="relative z-10 flex flex-col justify-between h-full">
+                  <div className="flex justify-between items-center mb-2">
+                    <h2 className="text-sm font-medium text-white/90 uppercase">
+                      Total Users
+                    </h2>
+                    <div className="p-2 bg-white/20 rounded-full">
+                      <FaUsers size={20} />
+                    </div>
+                  </div>
+
+                  <p className="text-4xl font-bold">{data.length}</p>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 mt-2 text-sm text-white/80"
+                  >
+                    <div className="text-green-300 font-semibold">
+                      {metaData?.new_users_percentage} %
+                    </div>
+                    <span>Since last week</span>
+                  </motion.div>
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.04 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20,
+                  delay: 0.1,
+                }}
+                className="relative rounded-3xl p-6 overflow-hidden shadow-xl text-white col-span-2 md:col-span-1"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)",
+                }}
+              >
+                {/* Background silhouette icon */}
+                <FaMobileAlt
+                  size={120}
+                  className="absolute opacity-10 right-2 top-2 rotate-12"
+                />
+
+                {/* Top badge */}
+                <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold tracking-wide">
+                  Most Engaged Model
                 </div>
 
-                <InputField
-                  label="Email Address"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  icon={<Mail className="w-5 h-5 text-gray-500" />}
-                  error={errors.email}
-                />
+                {/* Content */}
+                <div className="relative z-10 flex flex-col justify-between h-full mt-4">
+                  <h2 className="text-sm font-medium uppercase text-white/90 mb-1 tracking-wide">
+                    Top Model
+                  </h2>
 
-                <DropdownWithSearch
-                  label="Where did you hear about us?"
-                  placeholder="Select platform"
-                  value={formData.query}
-                  onChange={(v) => setFormData(prev => ({ ...prev, query: v }))}
-                  options={sourceOptions}
-                />
+                  {/* Model Name */}
+                  <p className="text-3xl font-bold leading-tight drop-shadow-sm">
+                    {metaData?.topModel || "N/A"}
+                  </p>
 
-                <div className="space-y-4">
-                  <label className="text-lg font-semibold text-gray-800">Feedback Type</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => { setIsPurchase(true); setFormData(prev => ({ ...prev, type: "" })); }}
-                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === true
-                        ? "border-blue-600 bg-blue-50 text-blue-700 shadow-md"
-                        : "border-gray-300 bg-gray-50 hover:border-blue-300"
-                        }`}
-                    >
-                      Purchase Inquiry
-                    </button>
-                    <button
-                      onClick={() => { setIsPurchase(false); setFormData(prev => ({ ...prev, model: "" })); }}
-                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === false
-                        ? "border-purple-600 bg-purple-50 text-purple-700 shadow-md"
-                        : "border-gray-300 bg-gray-50 hover:border-purple-300"
-                        }`}
-                    >
-                      General Feedback
-                    </button>
+                  {/* Sub info */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 mt-4 text-sm text-white/90"
+                  >
+                    <span className="font-semibold text-white">
+                      {metaData?.topModel}
+                    </span>
+                    <span className="opacity-80">
+                      is trending highest today
+                    </span>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {selectTab === 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white mt-6"
+              style={{
+                background:
+                  "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
+              }}
+            >
+              {/* Background Icon */}
+              <FaRegEnvelope
+                size={80}
+                className="absolute opacity-10 right-4 top-4 transform rotate-12"
+              />
+
+              {/* Top Bar Accent */}
+              <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-sm font-medium text-white/90 uppercase">
+                    Total Responses
+                  </h2>
+                  <div className="p-2 bg-white/20 rounded-full">
+                    <FaRegEnvelope size={20} />{" "}
+                    {/* Envelope icon for responses */}
                   </div>
                 </div>
 
-                {isPurchase === true && (
-                  <DropdownWithSearch
-                    label="Interested Model"
-                    placeholder="Choose vivo model"
-                    value={formData.model}
-                    onChange={(v) => setFormData(prev => ({ ...prev, model: v }))}
-                    options={modelList}
-                    loading={loading}
-                  />
-                )}
+                <p className="text-4xl font-bold">{modelData?.length}</p>
 
-                {isPurchase === false && (
-                  <UniversalTextArea
-                    label="Your Feedback"
-                    placeholder="Share your thoughts..."
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                    rows={4}
-                  />
-                )}
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 mt-2 text-sm text-white/80"
+                ></motion.div>
+              </div>
+            </motion.div>
+          )}
+          {selectTab === 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white mt-6"
+              style={{
+                background:
+                  "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
+              }}
+            >
+              {/* Background Icon */}
+              <FaUsers
+                size={80}
+                className="absolute opacity-10 right-4 top-4 transform rotate-12"
+              />
 
-                <UniversalButton
-                  label={submitting ? "Submitting..." : "Submit Feedback"}
-                  icon={<Send className="w-5 h-5" />}
-                  onClick={validateAndSubmit}
-                  disabled={submitting}
-                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-xl"
+              {/* Top Accent */}
+              <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-sm font-medium text-white/90 uppercase">
+                    Total Leads
+                  </h2>
+                  <div className="p-2 bg-white/20 rounded-full">
+                    <FaUsers size={20} />
+                  </div>
+                </div>
+
+                <p className="text-4xl font-bold">{totalLeads}</p>
+              </div>
+            </motion.div>
+          )}
+          {selectTab === 3 && (
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              {/* Instagram Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #e879f9, #d946ef, #c084fc)", // softer insta gradient
+                }}
+              >
+                <FaInstagram
+                  size={80}
+                  className="absolute opacity-10 right-4 top-4 rotate-12"
+                />
+
+                <div className="relative z-10">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-sm font-medium uppercase text-white/90">
+                      Instagram
+                    </h2>
+                    <div className="p-2 bg-white/20 rounded-full">
+                      <FaInstagram size={20} />
+                    </div>
+                  </div>
+
+                  <p className="text-4xl font-bold mt-2">{instagramCount}</p>
+                </div>
+              </motion.div>
+
+              {/* Facebook Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #1e3a8a, #3b82f6, #93c5fd)",
+                }}
+              >
+                <FaFacebook
+                  size={80}
+                  className="absolute opacity-10 right-4 top-4 rotate-12"
+                />
+
+                <div className="relative z-10">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-sm font-medium uppercase text-white/90">
+                      Facebook
+                    </h2>
+                    <div className="p-2 bg-white/20 rounded-full">
+                      <FaFacebook size={20} />
+                    </div>
+                  </div>
+
+                  <p className="text-4xl font-bold mt-2">{facebookCount}</p>
+                </div>
+              </motion.div>
+
+              {/* YouTube Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #7f1d1d, #dc2626, #fca5a5)", // deep red → soft salmon
+                }}
+              >
+                <FaYoutube
+                  size={80}
+                  className="absolute opacity-10 right-4 top-4 rotate-12"
+                />
+
+                <div className="relative z-10">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-sm font-medium uppercase text-white/90">
+                      YouTube
+                    </h2>
+                    <div className="p-2 bg-white/20 rounded-full">
+                      <FaYoutube size={20} />
+                    </div>
+                  </div>
+
+                  <p className="text-4xl font-bold mt-2">{youtubeCount}</p>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Charts */}
+          <div className="mt-8 grid grid-cols-2 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1"
+            >
+              <h3 className="text-gray-700 font-semibold mb-4">
+                Model Wise Responses
+              </h3>
+              <div className="w-full h-64">
+                <Bar
+                  data={modelResponseData}
+                  options={{ maintainAspectRatio: false }}
                 />
               </div>
+            </motion.div>
 
-              <div className="mt-10 pt-8 border-t border-gray-200 text-center">
-                <img src="/vivologonew.png" alt="vivo" className="h-14 mx-auto mb-4" />
-                <p className="text-lg font-bold text-gray-800">Yingjia Communication Pvt. Ltd.</p>
-                <p className="text-sm text-gray-600">
-                  Official Partner • Powered by <span className="font-bold text-blue-600">vivo</span>
-                </p>
-                <p className="text-xs text-gray-400 mt-5">
-                  © {new Date().getFullYear()} All rights reserved.
-                </p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1"
+            >
+              <h3 className="text-gray-700 font-semibold mb-4">
+                Responses By Source
+              </h3>
+              <div className="w-full h-64">
+                <Doughnut
+                  data={sourceResponseData}
+                  options={{ maintainAspectRatio: false }}
+                />
               </div>
-            </div>
+            </motion.div>
+          </div>
+
+          <ModelResponse data={data} />
+        </div>
+
+        {/* ---------------- RIGHT PANEL ---------------- */}
+        <div className="col-span-4 md:col-span-1 bg-gray-50 p-6 rounded-xl shadow-sm flex flex-col gap-6">
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">
+            Quick Insights
+          </h2>
+
+          {/* Example: Recent Users */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
+          >
+            <h3 className="text-gray-600 text-sm font-medium">
+              New Users Today
+            </h3>
+            <p className="text-2xl font-bold mt-1 text-blue-600">
+              {metaData?.newUserToday}
+            </p>
+          </motion.div>
+
+          {/* Example: Top Performing Model */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
+          >
+            <h3 className="text-gray-600 text-sm font-medium">Top Model</h3>
+            <p className="text-xl font-semibold mt-1 text-green-600">
+              {metaData?.topModel}
+            </p>
+          </motion.div>
+
+          {/* Example: Recent Leads */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
+          >
+            <h3 className="text-gray-600 text-sm font-medium">Recent Leads</h3>
+            <p className="text-xl font-semibold mt-1 text-purple-600">
+              {metaData?.recentLeadsCount}
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
+          >
+            <h3 className="text-gray-600 text-sm font-medium">Total Models</h3>
+            <p className="text-xl font-semibold mt-1 text-purple-600">
+              {modelData?.length}
+            </p>
           </motion.div>
         </div>
       </div>
@@ -388,4 +609,4 @@ const SurveyForm = () => {
   );
 };
 
-export default SurveyForm;
+export default AdminDashboard;

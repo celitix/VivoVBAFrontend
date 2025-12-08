@@ -21,8 +21,11 @@ import {
 } from "lucide-react";
 import LoopIcon from "@mui/icons-material/Loop";
 
-
-import { getLeadData, createLead, trackData } from "@/apis/manageuser/manageuser";
+import {
+  getLeadData,
+  createLead,
+  trackData,
+} from "@/apis/manageuser/manageuser";
 
 import InputField from "@/components/common/InputField";
 import UniversalTextArea from "@/components/common/UniversalTextArea";
@@ -33,10 +36,12 @@ import CustomTooltip from "@/components/common/CustomTooltip";
 import { exportToExcel } from "@/utils/exportToExcel";
 import Capsule from "@/components/common/Capsule";
 import DataTable from "@/components/common/DataTable";
-import { exportSurveyReport, getUserFilledSurveyForms } from "../apis/manageuser/manageuser";
+import {
+  exportSurveyReport,
+  getUserFilledSurveyForms,
+} from "../apis/manageuser/manageuser";
 import UniversalSkeleton from "../components/ui/UniversalSkeleton";
 import toast from "react-hot-toast";
-
 
 const SurveyFormReport = () => {
   const { state } = useLocation();
@@ -47,12 +52,13 @@ const SurveyFormReport = () => {
   const [rowData, setRowData] = useState(null);
 
   const [forms, setForms] = useState(state?.forms || []);
-  const [meta, setMeta] = useState(state?.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 });
+  const [meta, setMeta] = useState(
+    state?.meta || { current_page: 1, last_page: 1, per_page: 10, total: 0 }
+  );
   const token = state?.token;
   const [page, setPage] = useState(meta.current_page);
   const [pageSize, setPageSize] = useState(meta.per_page);
   const [loading, setLoading] = useState(false);
-
 
   const [createLeadForm, setCreateLeadForm] = useState({
     remarks: "",
@@ -88,7 +94,10 @@ const SurveyFormReport = () => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await getUserFilledSurveyForms(token, { page: p, per_page: ps });
+      const res = await getUserFilledSurveyForms(token, {
+        page: p,
+        per_page: ps,
+      });
       setForms(res.tokenResponse || []);
       setMeta(res.meta || { current_page: p, per_page: ps, total: 0 });
     } catch (err) {
@@ -144,7 +153,7 @@ const SurveyFormReport = () => {
   // const forms = state.forms;
 
   const columns = [
-    { Header: "Sr No", accessor: "srno", width: 80 },
+    { Header: "Sr No", accessor: "srno", width: 80, flex: 0 },
     { Header: "Created At", accessor: "created_at", minWidth: 180, flex: 1 },
     {
       Header: "Consumer Name",
@@ -161,7 +170,7 @@ const SurveyFormReport = () => {
     { Header: "Email", accessor: "email", minWidth: 200, flex: 1 },
     { Header: "Model", accessor: "model", minWidth: 180, flex: 1 },
     { Header: "Source", accessor: "query", minWidth: 180, flex: 1 },
-    { Header: "Type", accessor: "type", minWidth: 180, flex: 1 },
+    { Header: "Feedback", accessor: "type", minWidth: 180, flex: 1 },
     { Header: "Status", accessor: "isCreated", minWidth: 180, flex: 1 },
     {
       Header: "Action",
@@ -217,7 +226,7 @@ const SurveyFormReport = () => {
   ];
   const tableData = forms.map((item, index) => ({
     // srno: index + 1,
-    srno: ((meta.current_page - 1) * meta.per_page) + index + 1,
+    srno: (meta.current_page - 1) * meta.per_page + index + 1,
     created_at: moment(item.created_at).format("DD-MM-YYYY HH:mm A"),
     consumer_name: item.consumer_name || "-",
     contact_number: item.contact_number || "-",
@@ -257,13 +266,15 @@ const SurveyFormReport = () => {
       const res = await exportSurveyReport(token);
 
       const blob = new Blob([res.data], {
-        type: res.headers["content-type"] || "application/octet-stream"
+        type: res.headers["content-type"] || "application/octet-stream",
       });
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Survey_Report_${moment().format("DD-MM-YYYY_HHmm")}.xlsx`;
+      link.download = `Survey_Report_${moment().format(
+        "DD-MM-YYYY_HHmm"
+      )}.xlsx`;
       link.click();
 
       window.URL.revokeObjectURL(url);
@@ -283,7 +294,12 @@ const SurveyFormReport = () => {
         </h2>
         <div className="flex items-center gap-5 flex-wrap justify-center">
           <UniversalButton
-            icon={<RefreshCw className={loading ? "animate-spin scale-x-[-1]" : ""} size="18px" />}
+            icon={
+              <RefreshCw
+                className={loading ? "animate-spin scale-x-[-1]" : ""}
+                size="18px"
+              />
+            }
             variant="secondary"
             onClick={() => fetchForms(page, pageSize)}
             label="Refresh"
@@ -402,10 +418,11 @@ const SurveyFormReport = () => {
                   Lead Created
                 </h3>
                 <span
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${rowData.leads.is_converted
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-amber-800"
-                    }`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${
+                    rowData.leads.is_converted
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-amber-800"
+                  }`}
                 >
                   {rowData.leads.is_converted ? "Converted" : "Not Converted"}
                 </span>
@@ -447,10 +464,11 @@ const SurveyFormReport = () => {
                     Converted
                   </div>
                   <div
-                    className={`font-bold ${rowData.leads.is_converted
-                      ? "text-green-600"
-                      : "text-orange-600"
-                      }`}
+                    className={`font-bold ${
+                      rowData.leads.is_converted
+                        ? "text-green-600"
+                        : "text-orange-600"
+                    }`}
                   >
                     {rowData.leads.is_converted ? "Yes" : "No"}
                   </div>

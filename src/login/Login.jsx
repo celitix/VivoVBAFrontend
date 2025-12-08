@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FaLock } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/apis/login/login";
 import InputField from "@/components/common/InputField";
@@ -11,6 +12,7 @@ import UniversalButton from "@/components/common/UniversalButton";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [inputDetails, setInputDetails] = useState({
     password: "",
@@ -53,7 +55,8 @@ const Login = () => {
           : null);
 
       if (backendMessage) {
-        console.error(`${backendMessage}`)
+        console.error(`${backendMessage}`);
+        toast.error(`${backendMessage}`)
       } else {
         toast.error("Something went wrong. Please try again.");
       }
@@ -66,6 +69,12 @@ const Login = () => {
     const token = sessionStorage.getItem("token");
     if (token) navigate("/");
   }, [navigate]);
+
+  const handleTogglePassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const PasswordToggleIcon = showPassword ? EyeOff : Eye;
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-cover bg-center px-2">
@@ -92,8 +101,14 @@ const Login = () => {
           </p>
         </div> */}
         <div className="border-gray-200 text-center mb-6">
-          <img src="/vivologonew.png" alt="vivo" className="md:h-14 h-12 mx-auto mb-4" />
-          <p className="md:text-lg text-md font-bold text-gray-800">"Yingjia Communication Pvt. Ltd."</p>
+          <img
+            src="/vivologonew.png"
+            alt="vivo"
+            className="md:h-14 h-12 mx-auto mb-4"
+          />
+          <p className="md:text-lg text-md font-bold text-gray-800">
+            "Yingjia Communication Pvt. Ltd."
+          </p>
         </div>
 
         <>
@@ -116,21 +131,30 @@ const Login = () => {
               }
               disabled={loading}
             />
-
-            <InputField
-              icon={<FaLock className="text-gray-400" />}
-              label="Password"
-              placeholder="Enter your Password"
-              type="text"
-              value={inputDetails.password}
-              onChange={(e) =>
-                setInputDetails({
-                  ...inputDetails,
-                  password: e.target.value,
-                })
-              }
-              disabled={loading}
-            />
+            <div className="relative" >
+              <InputField
+                icon={<FaLock className="text-gray-400" />}
+                label="Password"
+                placeholder="Enter your Password"
+                type={showPassword ? "text" : "password"}
+                value={inputDetails.password}
+                onChange={(e) =>
+                  setInputDetails({
+                    ...inputDetails,
+                    password: e.target.value,
+                  })
+                }
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={handleTogglePassword}
+                className="p-1 text-gray-500 hover:text-gray-700 transition-colors  absolute right-2 top-7.5 cursor-pointer"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                <PasswordToggleIcon className="w-5 h-5" />
+              </button>
+            </div>
 
             <UniversalButton
               // label="Send OTP"
@@ -145,7 +169,8 @@ const Login = () => {
         </>
         <div className="mt-5 pt-4 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600">
-            Official Partner • Powered by <span className="font-bold text-blue-600">vivo</span>
+            Official Partner • Powered by{" "}
+            <span className="font-bold text-blue-600">vivo</span>
           </p>
           <p className="text-xs text-gray-400 mt-2">
             © {new Date().getFullYear()} All rights reserved.

@@ -14,14 +14,23 @@ import {
 } from "chart.js";
 import { FaUsers, FaChartLine } from "react-icons/fa";
 
+import {
+  RefreshCw,
+  Zap,
+  CheckCircle2,
+  BarChart2,
+  TrendingUp,
+} from "lucide-react";
+
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import Reports from "./AdminDashboardComponents/Reports";
 import ModelResponse from "./AdminDashboardComponents/ModelResponse";
 import { FaRegEnvelope } from "react-icons/fa";
 import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
 import { FaMobileAlt } from "react-icons/fa";
-import { RefreshCw } from "lucide-react";
 import UniversalButton from "@/components/common/UniversalButton";
+import toast from "react-hot-toast";
+import UniversalSkeleton from "../components/ui/UniversalSkeleton";
 
 // Register Chart.js components
 ChartJS.register(
@@ -52,8 +61,10 @@ const AdminDashboard = () => {
     try {
       const res = await trackData();
       if (res.status === true) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         setData(res.data);
         setMetaData(res.meta);
+        toast.success("Latest Metrics Loaded Successfully!");
       }
     } catch (error) {
       console.log("error", error);
@@ -162,448 +173,633 @@ const AdminDashboard = () => {
     ],
   };
 
+  // const DashboardSkeleton = () => (
+  //   <div className="w-full p-6">
+  //     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+  //       {/* ---------------- LEFT MAIN PANEL SKELETON ---------------- */}
+  //       <div className="col-span-4 md:col-span-3 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+  //         {/* Dashboard Header Skeleton */}
+  //         <div className="flex items-center justify-between mb-8">
+  //           <UniversalSkeleton height="3rem" width="w-24" />
+  //           <UniversalSkeleton height="1.5rem" width="w-64" />
+  //         </div>
+
+  //         {/* Tabs Skeleton */}
+  //         <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
+  //           <div className="flex gap-4">
+  //             <UniversalSkeleton
+  //               height="2rem"
+  //               width="w-20"
+  //               className="rounded-full"
+  //             />
+  //             <UniversalSkeleton
+  //               height="2rem"
+  //               width="w-24"
+  //               className="rounded-full"
+  //             />
+  //             <UniversalSkeleton
+  //               height="2rem"
+  //               width="w-20"
+  //               className="rounded-full"
+  //             />
+  //             <UniversalSkeleton
+  //               height="2rem"
+  //               width="w-24"
+  //               className="rounded-full"
+  //             />
+  //           </div>
+  //           <UniversalSkeleton height="2rem" width="w-32" />
+  //         </div>
+
+  //         {/* Stats Cards Skeleton (Based on selectTab === 0 view) */}
+  //         <div className="mt-6 grid grid-cols-2 gap-6">
+  //           {/* Card 1 */}
+  //           <UniversalSkeleton
+  //             height="9rem"
+  //             width="w-full"
+  //             className="col-span-2 md:col-span-1"
+  //           />
+  //           {/* Card 2 */}
+  //           <UniversalSkeleton
+  //             height="9rem"
+  //             width="w-full"
+  //             className="col-span-2 md:col-span-1"
+  //           />
+  //         </div>
+
+  //         {/* Charts Skeleton */}
+  //         <div className="mt-8 grid grid-cols-2 gap-6">
+  //           {/* Chart 1 */}
+  //           <div className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1">
+  //             <UniversalSkeleton
+  //               height="1.5rem"
+  //               width="w-1/2"
+  //               className="mb-4"
+  //             />
+  //             <UniversalSkeleton height="10rem" width="w-full" />
+  //           </div>
+  //           {/* Chart 2 */}
+  //           <div className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1">
+  //             <UniversalSkeleton
+  //               height="1.5rem"
+  //               width="w-1/2"
+  //               className="mb-4"
+  //             />
+  //             <UniversalSkeleton height="10rem" width="w-full" />
+  //           </div>
+  //         </div>
+
+  //         {/* Table/ModelResponse Skeleton (Example height) */}
+  //         <div className="mt-8">
+  //           <UniversalSkeleton height="2rem" width="w-full" className="mb-4" />
+  //           <UniversalSkeleton height="15rem" width="w-full" />
+  //         </div>
+  //       </div>
+
+  //       {/* ---------------- RIGHT PANEL SKELETON ---------------- */}
+  //       <div className="col-span-4 md:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col gap-6">
+  //         <UniversalSkeleton height="1.5rem" width="w-1/2" className="mb-2" />
+
+  //         {/* Quick Insight Cards */}
+  //         <UniversalSkeleton height="5rem" width="w-full" />
+  //         <UniversalSkeleton height="5rem" width="w-full" />
+  //         <UniversalSkeleton height="5rem" width="w-full" />
+  //         <UniversalSkeleton height="5rem" width="w-full" />
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+
+  const DynamicLoadingHeader = () => {
+    const [currentStep, setCurrentStep] = useState(0);
+    const steps = [
+      {
+        icon: TrendingUp,
+        text: "Analyzing latest user trends...",
+        color: "text-blue-600",
+      },
+      {
+        icon: BarChart2,
+        text: "Calculating model wise responses...",
+        color: "text-indigo-600",
+      },
+      {
+        icon: Zap,
+        text: "Fetching real-time quick insights...",
+        color: "text-teal-600",
+      },
+      {
+        icon: CheckCircle2,
+        text: "Validating data integrity...",
+        color: "text-green-600",
+      },
+    ];
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setCurrentStep((prev) => (prev + 1) % steps.length);
+      }, 1500); // Change every 1.5 seconds
+
+      return () => clearInterval(interval);
+    }, []);
+
+    const StepIcon = steps[currentStep].icon;
+
+    return (
+      <div className="flex items-center justify-start gap-4 mb-8">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+          className={`p-3 rounded-full bg-white shadow-xl ${steps[currentStep].color}`}
+        >
+          <StepIcon size={24} className="animate-pulse" />
+        </motion.div>
+
+        <motion.div
+          key={steps[currentStep].text}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col"
+        >
+          <h2 className="text-xl font-semibold text-gray-700">
+            Loading Dashboard
+          </h2>
+          <p className={`text-sm font-medium ${steps[currentStep].color}`}>
+            {steps[currentStep].text}
+          </p>
+        </motion.div>
+      </div>
+    );
+  };
+
   return (
-    <div className="w-full p-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* ---------------- LEFT MAIN PANEL ---------------- */}
-        <div className="col-span-4 md:col-span-3 bg-gray-50 p-6 rounded-xl shadow-sm">
-          {/* Dashboard Header */}
-          <div className="flex items-center md:justify-between mb-8 flex-wrap justify-center">
-            <img src="/vivologonew.png" alt="vivo" className="h-12" />
-            <h2 className="text-2xl font-semibold text-gray-700">
-              Yingjia Communication Pvt. Ltd.
-            </h2>
-          </div>
-          {/* Tabs */}
-          <div className="overflow-x-auto whitespace-nowrap scrollbar-thin flex justify-between">
-            <div className="flex gap-4 relative pb-2 w-max">
-              {mainTabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setSelectTab(t.id)}
-                  className={`relative px-4 py-1 text-lg font-medium transition-all duration-300 rounded-full z-10
+    <>
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 100 }}
+              className="p-10 rounded-2xl bg-white shadow-2xl border border-gray-100"
+            >
+              <DynamicLoadingHeader />
+            </motion.div>
+          </motion.div>
+        </div>
+      ) : (
+        <div className="w-full p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* ---------------- LEFT MAIN PANEL ---------------- */}
+            <div className="col-span-4 md:col-span-3 bg-gray-50 p-6 rounded-xl shadow-sm">
+              {/* Dashboard Header */}
+              <div className="flex items-center md:justify-between mb-8 flex-wrap justify-center">
+                <img src="/vivologonew.png" alt="vivo" className="h-12" />
+                <h2 className="text-2xl font-semibold text-gray-700">
+                  Yingjia Communication Pvt. Ltd.
+                </h2>
+              </div>
+              {/* Tabs */}
+              <div className="overflow-x-auto whitespace-nowrap scrollbar-thin flex justify-between">
+                <div className="flex gap-4 relative pb-2 w-max">
+                  {mainTabs.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setSelectTab(t.id)}
+                      className={`relative px-4 py-1 text-lg font-medium transition-all duration-300 rounded-full z-10
                   ${
                     selectTab === t.id
                       ? "text-white"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
-                >
-                  {t.label}
+                    >
+                      {t.label}
 
-                  {/* Animated capsule */}
-                  {selectTab === t.id && (
-                    <motion.div
-                      layoutId="tab-capsule"
-                      className="absolute inset-0 rounded-full z-[-1]"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)", // gradient color
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 30,
-                      }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center">
-              <UniversalButton
-                variant="secondary"
-                label={loading ? "Refreshing..." : "Refresh"}
-                disabled={loading}
-                icon={
-                  <RefreshCw
-                    className={loading ? "animate-spin scale-x-[-1]" : ""}
-                    size="18px"
+                      {/* Animated capsule */}
+                      {selectTab === t.id && (
+                        <motion.div
+                          layoutId="tab-capsule"
+                          className="absolute inset-0 rounded-full z-[-1]"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)", // gradient color
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 30,
+                          }}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center">
+                  <UniversalButton
+                    variant="secondary"
+                    label={loading ? "Refreshing..." : "Refresh"}
+                    disabled={loading}
+                    icon={
+                      <RefreshCw
+                        className={loading ? "animate-spin scale-x-[-1]" : ""}
+                        size="18px"
+                      />
+                    }
+                    onClick={() => trackLeadData()}
                   />
-                }
-                onClick={() => trackLeadData()}
-              />
-            </div>
-          </div>
+                </div>
+              </div>
 
-          {/* Stats Cards */}
-          {selectTab === 0 && (
-            <div className="mt-6 grid grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-2 md:col-span-1"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
-                }}
-              >
-                {/* Background Icon */}
-                <FaUsers
-                  size={80}
-                  className="absolute opacity-10 right-4 top-4 transform rotate-12"
-                />
-
-                {/* Top Bar Accent */}
-                <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
-
-                {/* Content */}
-                <div className="relative z-10 flex flex-col justify-between h-full">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-sm font-medium text-white/90 uppercase">
-                      Total Users
-                    </h2>
-                    <div className="p-2 bg-white/20 rounded-full">
-                      <FaUsers size={20} />
-                    </div>
-                  </div>
-
-                  <p className="text-4xl font-bold">{data.length}</p>
-
+              {/* Stats Cards */}
+              {selectTab === 0 && (
+                <div className="mt-6 grid grid-cols-2 gap-6">
                   <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 mt-2 text-sm text-white/80"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-2 md:col-span-1"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
+                    }}
                   >
-                    <div className="text-green-300 font-semibold">
-                      {metaData?.new_users_percentage} %
+                    {/* Background Icon */}
+                    <FaUsers
+                      size={80}
+                      className="absolute opacity-10 right-4 top-4 transform rotate-12"
+                    />
+
+                    {/* Top Bar Accent */}
+                    <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 flex flex-col justify-between h-full">
+                      <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-sm font-medium text-white/90 uppercase">
+                          Total Users
+                        </h2>
+                        <div className="p-2 bg-white/20 rounded-full">
+                          <FaUsers size={20} />
+                        </div>
+                      </div>
+
+                      <p className="text-4xl font-bold">{data.length}</p>
+
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-2 mt-2 text-sm text-white/80"
+                      >
+                        <div className="text-green-300 font-semibold">
+                          {metaData?.new_users_percentage} %
+                        </div>
+                        <span>Since last week</span>
+                      </motion.div>
                     </div>
-                    <span>Since last week</span>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.04 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 20,
+                      delay: 0.1,
+                    }}
+                    className="relative rounded-3xl p-6 overflow-hidden shadow-xl text-white col-span-2 md:col-span-1"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)",
+                    }}
+                  >
+                    {/* Background silhouette icon */}
+                    <FaMobileAlt
+                      size={120}
+                      className="absolute opacity-10 right-2 top-2 rotate-12"
+                    />
+
+                    {/* Top badge */}
+                    <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold tracking-wide">
+                      Most Engaged Model
+                    </div>
+
+                    {/* Content */}
+                    <div className="relative z-10 flex flex-col justify-between h-full mt-4">
+                      <h2 className="text-sm font-medium uppercase text-white/90 mb-1 tracking-wide">
+                        Top Model
+                      </h2>
+
+                      {/* Model Name */}
+                      <p className="text-3xl font-bold leading-tight drop-shadow-sm">
+                        {metaData?.topModel || "N/A"}
+                      </p>
+
+                      {/* Sub info */}
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-2 mt-4 text-sm text-white/90"
+                      >
+                        <span className="font-semibold text-white">
+                          {metaData?.topModel}
+                        </span>
+                        <span className="opacity-80">
+                          is trending highest today
+                        </span>
+                      </motion.div>
+                    </div>
                   </motion.div>
                 </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.04 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 20,
-                  delay: 0.1,
-                }}
-                className="relative rounded-3xl p-6 overflow-hidden shadow-xl text-white col-span-2 md:col-span-1"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)",
-                }}
-              >
-                {/* Background silhouette icon */}
-                <FaMobileAlt
-                  size={120}
-                  className="absolute opacity-10 right-2 top-2 rotate-12"
-                />
+              )}
 
-                {/* Top badge */}
-                <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold tracking-wide">
-                  Most Engaged Model
-                </div>
+              {selectTab === 1 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white mt-6"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
+                  }}
+                >
+                  {/* Background Icon */}
+                  <FaRegEnvelope
+                    size={80}
+                    className="absolute opacity-10 right-4 top-4 transform rotate-12"
+                  />
 
-                {/* Content */}
-                <div className="relative z-10 flex flex-col justify-between h-full mt-4">
-                  <h2 className="text-sm font-medium uppercase text-white/90 mb-1 tracking-wide">
-                    Top Model
-                  </h2>
+                  {/* Top Bar Accent */}
+                  <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
 
-                  {/* Model Name */}
-                  <p className="text-3xl font-bold leading-tight drop-shadow-sm">
-                    {metaData?.topModel || "N/A"}
-                  </p>
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col justify-between h-full">
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-sm font-medium text-white/90 uppercase">
+                        Total Responses
+                      </h2>
+                      <div className="p-2 bg-white/20 rounded-full">
+                        <FaRegEnvelope size={20} />{" "}
+                        {/* Envelope icon for responses */}
+                      </div>
+                    </div>
 
-                  {/* Sub info */}
+                    <p className="text-4xl font-bold">{modelData?.length}</p>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-2 mt-2 text-sm text-white/80"
+                    ></motion.div>
+                  </div>
+                </motion.div>
+              )}
+              {selectTab === 2 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white mt-6"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
+                  }}
+                >
+                  {/* Background Icon */}
+                  <FaUsers
+                    size={80}
+                    className="absolute opacity-10 right-4 top-4 transform rotate-12"
+                  />
+
+                  {/* Top Accent */}
+                  <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
+
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col justify-between h-full">
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-sm font-medium text-white/90 uppercase">
+                        Total Leads
+                      </h2>
+                      <div className="p-2 bg-white/20 rounded-full">
+                        <FaUsers size={20} />
+                      </div>
+                    </div>
+
+                    <p className="text-4xl font-bold">{totalLeads}</p>
+                  </div>
+                </motion.div>
+              )}
+              {selectTab === 3 && (
+                <div className="grid grid-cols-3 gap-4 mt-6">
+                  {/* Instagram Card */}
                   <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 mt-4 text-sm text-white/90"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #e879f9, #d946ef, #c084fc)", // softer insta gradient
+                    }}
                   >
-                    <span className="font-semibold text-white">
-                      {metaData?.topModel}
-                    </span>
-                    <span className="opacity-80">
-                      is trending highest today
-                    </span>
+                    <FaInstagram
+                      size={80}
+                      className="absolute opacity-10 right-4 top-4 rotate-12"
+                    />
+
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-sm font-medium uppercase text-white/90">
+                          Instagram
+                        </h2>
+                        <div className="p-2 bg-white/20 rounded-full">
+                          <FaInstagram size={20} />
+                        </div>
+                      </div>
+
+                      <p className="text-4xl font-bold mt-2">
+                        {instagramCount}
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Facebook Card */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #1e3a8a, #3b82f6, #93c5fd)",
+                    }}
+                  >
+                    <FaFacebook
+                      size={80}
+                      className="absolute opacity-10 right-4 top-4 rotate-12"
+                    />
+
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-sm font-medium uppercase text-white/90">
+                          Facebook
+                        </h2>
+                        <div className="p-2 bg-white/20 rounded-full">
+                          <FaFacebook size={20} />
+                        </div>
+                      </div>
+
+                      <p className="text-4xl font-bold mt-2">{facebookCount}</p>
+                    </div>
+                  </motion.div>
+
+                  {/* YouTube Card */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #7f1d1d, #dc2626, #fca5a5)", // deep red → soft salmon
+                    }}
+                  >
+                    <FaYoutube
+                      size={80}
+                      className="absolute opacity-10 right-4 top-4 rotate-12"
+                    />
+
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-sm font-medium uppercase text-white/90">
+                          YouTube
+                        </h2>
+                        <div className="p-2 bg-white/20 rounded-full">
+                          <FaYoutube size={20} />
+                        </div>
+                      </div>
+
+                      <p className="text-4xl font-bold mt-2">{youtubeCount}</p>
+                    </div>
                   </motion.div>
                 </div>
-              </motion.div>
-            </div>
-          )}
+              )}
 
-          {selectTab === 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white mt-6"
-              style={{
-                background:
-                  "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
-              }}
-            >
-              {/* Background Icon */}
-              <FaRegEnvelope
-                size={80}
-                className="absolute opacity-10 right-4 top-4 transform rotate-12"
-              />
-
-              {/* Top Bar Accent */}
-              <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col justify-between h-full">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-sm font-medium text-white/90 uppercase">
-                    Total Responses
-                  </h2>
-                  <div className="p-2 bg-white/20 rounded-full">
-                    <FaRegEnvelope size={20} />{" "}
-                    {/* Envelope icon for responses */}
+              {/* Charts */}
+              <div className="mt-8 grid grid-cols-2 gap-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1"
+                >
+                  <h3 className="text-gray-700 font-semibold mb-4">
+                    Model Wise Responses
+                  </h3>
+                  <div className="w-full h-64">
+                    <Bar
+                      data={modelResponseData}
+                      options={{ maintainAspectRatio: false }}
+                    />
                   </div>
-                </div>
-
-                <p className="text-4xl font-bold">{modelData?.length}</p>
+                </motion.div>
 
                 <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-2 mt-2 text-sm text-white/80"
-                ></motion.div>
-              </div>
-            </motion.div>
-          )}
-          {selectTab === 2 && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white mt-6"
-              style={{
-                background:
-                  "linear-gradient(135deg, #4f46e5, #6366f1, #818cf8)",
-              }}
-            >
-              {/* Background Icon */}
-              <FaUsers
-                size={80}
-                className="absolute opacity-10 right-4 top-4 transform rotate-12"
-              />
-
-              {/* Top Accent */}
-              <div className="absolute top-0 left-0 w-16 h-2 bg-white/50 rounded-tr-lg"></div>
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col justify-between h-full">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-sm font-medium text-white/90 uppercase">
-                    Total Leads
-                  </h2>
-                  <div className="p-2 bg-white/20 rounded-full">
-                    <FaUsers size={20} />
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1"
+                >
+                  <h3 className="text-gray-700 font-semibold mb-4">
+                    Responses By Source
+                  </h3>
+                  <div className="w-full h-64">
+                    <Doughnut
+                      data={sourceResponseData}
+                      options={{ maintainAspectRatio: false }}
+                    />
                   </div>
-                </div>
-
-                <p className="text-4xl font-bold">{totalLeads}</p>
+                </motion.div>
               </div>
-            </motion.div>
-          )}
-          {selectTab === 3 && (
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              {/* Instagram Card */}
+
+              <ModelResponse data={data} />
+            </div>
+
+            {/* ---------------- RIGHT PANEL ---------------- */}
+            <div className="col-span-4 md:col-span-1 bg-gray-50 p-6 rounded-xl shadow-sm flex flex-col gap-6">
+              <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                Quick Insights
+              </h2>
+
+              {/* Example: Recent Users */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #e879f9, #d946ef, #c084fc)", // softer insta gradient
-                }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
               >
-                <FaInstagram
-                  size={80}
-                  className="absolute opacity-10 right-4 top-4 rotate-12"
-                />
-
-                <div className="relative z-10">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-sm font-medium uppercase text-white/90">
-                      Instagram
-                    </h2>
-                    <div className="p-2 bg-white/20 rounded-full">
-                      <FaInstagram size={20} />
-                    </div>
-                  </div>
-
-                  <p className="text-4xl font-bold mt-2">{instagramCount}</p>
-                </div>
+                <h3 className="text-gray-600 text-sm font-medium">
+                  New Users Today
+                </h3>
+                <p className="text-2xl font-bold mt-1 text-blue-600">
+                  {metaData?.newUserToday}
+                </p>
               </motion.div>
 
-              {/* Facebook Card */}
+              {/* Example: Top Performing Model */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #1e3a8a, #3b82f6, #93c5fd)",
-                }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
               >
-                <FaFacebook
-                  size={80}
-                  className="absolute opacity-10 right-4 top-4 rotate-12"
-                />
-
-                <div className="relative z-10">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-sm font-medium uppercase text-white/90">
-                      Facebook
-                    </h2>
-                    <div className="p-2 bg-white/20 rounded-full">
-                      <FaFacebook size={20} />
-                    </div>
-                  </div>
-
-                  <p className="text-4xl font-bold mt-2">{facebookCount}</p>
-                </div>
+                <h3 className="text-gray-600 text-sm font-medium">Top Model</h3>
+                <p className="text-xl font-semibold mt-1 text-green-600">
+                  {metaData?.topModel}
+                </p>
               </motion.div>
 
-              {/* YouTube Card */}
+              {/* Example: Recent Leads */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="relative rounded-3xl p-6 overflow-hidden shadow-lg text-white col-span-3 md:col-span-1"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #7f1d1d, #dc2626, #fca5a5)", // deep red → soft salmon
-                }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
               >
-                <FaYoutube
-                  size={80}
-                  className="absolute opacity-10 right-4 top-4 rotate-12"
-                />
+                <h3 className="text-gray-600 text-sm font-medium">
+                  Recent Leads
+                </h3>
+                <p className="text-xl font-semibold mt-1 text-purple-600">
+                  {metaData?.recentLeadsCount}
+                </p>
+              </motion.div>
 
-                <div className="relative z-10">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-sm font-medium uppercase text-white/90">
-                      YouTube
-                    </h2>
-                    <div className="p-2 bg-white/20 rounded-full">
-                      <FaYoutube size={20} />
-                    </div>
-                  </div>
-
-                  <p className="text-4xl font-bold mt-2">{youtubeCount}</p>
-                </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
+              >
+                <h3 className="text-gray-600 text-sm font-medium">
+                  Total Models
+                </h3>
+                <p className="text-xl font-semibold mt-1 text-purple-600">
+                  {modelData?.length}
+                </p>
               </motion.div>
             </div>
-          )}
-
-          {/* Charts */}
-          <div className="mt-8 grid grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1"
-            >
-              <h3 className="text-gray-700 font-semibold mb-4">
-                Model Wise Responses
-              </h3>
-              <div className="w-full h-64">
-                <Bar
-                  data={modelResponseData}
-                  options={{ maintainAspectRatio: false }}
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl bg-white shadow-lg p-6 border border-gray-100 flex flex-col items-center col-span-2 md:col-span-1"
-            >
-              <h3 className="text-gray-700 font-semibold mb-4">
-                Responses By Source
-              </h3>
-              <div className="w-full h-64">
-                <Doughnut
-                  data={sourceResponseData}
-                  options={{ maintainAspectRatio: false }}
-                />
-              </div>
-            </motion.div>
           </div>
-
-          <ModelResponse data={data} />
         </div>
-
-        {/* ---------------- RIGHT PANEL ---------------- */}
-        <div className="col-span-4 md:col-span-1 bg-gray-50 p-6 rounded-xl shadow-sm flex flex-col gap-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">
-            Quick Insights
-          </h2>
-
-          {/* Example: Recent Users */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
-          >
-            <h3 className="text-gray-600 text-sm font-medium">
-              New Users Today
-            </h3>
-            <p className="text-2xl font-bold mt-1 text-blue-600">
-              {metaData?.newUserToday}
-            </p>
-          </motion.div>
-
-          {/* Example: Top Performing Model */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
-          >
-            <h3 className="text-gray-600 text-sm font-medium">Top Model</h3>
-            <p className="text-xl font-semibold mt-1 text-green-600">
-              {metaData?.topModel}
-            </p>
-          </motion.div>
-
-          {/* Example: Recent Leads */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
-          >
-            <h3 className="text-gray-600 text-sm font-medium">Recent Leads</h3>
-            <p className="text-xl font-semibold mt-1 text-purple-600">
-              {metaData?.recentLeadsCount}
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            className="rounded-xl bg-white p-4 shadow-md border border-gray-100"
-          >
-            <h3 className="text-gray-600 text-sm font-medium">Total Models</h3>
-            <p className="text-xl font-semibold mt-1 text-purple-600">
-              {modelData?.length}
-            </p>
-          </motion.div>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

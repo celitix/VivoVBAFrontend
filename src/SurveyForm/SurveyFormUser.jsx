@@ -137,8 +137,8 @@ const SurveyFormUser = () => {
     },
     { Header: "Email", accessor: "email", minWidth: 200, flex: 1 },
     { Header: "Model", accessor: "model", minWidth: 180, flex: 1 },
-    { Header: "Query", accessor: "query", minWidth: 180, flex: 1 },
-    { Header: "Type", accessor: "type", minWidth: 180, flex: 1 },
+    { Header: "Source", accessor: "query", minWidth: 180, flex: 1 },
+    { Header: "Feedback", accessor: "type", minWidth: 180, flex: 1 },
     { Header: "Status", accessor: "isCreated", minWidth: 180, flex: 1 },
     {
       Header: "Action",
