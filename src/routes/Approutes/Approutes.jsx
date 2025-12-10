@@ -21,10 +21,13 @@ import ManageUser from "@/ManageUser/ManageUser";
 // SurveyForm Reports
 import SurveyFormReport from "@/SurveyForm/SurveyFormReport";
 import SurveyFormUser from "@/SurveyForm/SurveyFormUser";
+import SurveyFormReportAll from "@/SurveyForm/SurveyFormReportAll";
 
 import ManageModels from "@/ManageModels/ManageModels";
+
 import VivoTypingLoader from "@/components/loaders/VivoTypingLoader";
-import Loader from "../../components/loaders/Loader";
+
+import Loader from "@/components/loaders/Loader";
 
 const Approutes = () => {
   const { currentRole, isLoading } = useRoleContext();
@@ -49,6 +52,7 @@ const Approutes = () => {
 
         <Route path="/manageuser" element={<ManageUser />} />
         <Route path="/surveyformreport" element={<SurveyFormReport />} />
+        <Route path="/surveyformreportall" element={<SurveyFormReportAll />} />
         <Route path="/managemodels" element={<ManageModels />} />
         <Route path="/surveyformuser" element={<SurveyFormUser />} />
       </Route>

@@ -77,7 +77,6 @@ const AdminDashboard = () => {
     trackLeadData();
   }, []);
 
-  console.log("loading", loading);
   // ****************data seggregation ****************
 
   useEffect(() => {
@@ -552,7 +551,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    <p className="text-4xl font-bold">{modelData?.length}</p>
+                    <p className="text-4xl font-bold">{metaData?.totalResponse}</p>
 
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}

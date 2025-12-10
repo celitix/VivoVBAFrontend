@@ -47,7 +47,6 @@ const SurveyFormUser = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openAddLeadDialog, setOpenAddLeadDialog] = useState(false);
   const [rowData, setRowData] = useState(null);
-  console.log(rowData)
   const [userData, setUserData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedChip, setSelectedChip] = useState("");
@@ -94,9 +93,40 @@ const SurveyFormUser = () => {
   };
 
   const handleSaveLead = async () => {
+
+    if (createLeadForm.is_converted) {
+      // Converted → IMEI required
+      if (!createLeadForm.imei) {
+        toast.error("IMEI number is required.");
+        return;
+      }
+
+      if (!/^\d{15}$/.test(createLeadForm.imei)) {
+        toast.error("IMEI must be a 15-digit numeric value.");
+        return;
+      }
+    } else {
+      // Not Converted → Reason required
+      if (!selectedChip) {
+        toast.error("Please select a reason for non-conversion.");
+        return;
+      }
+
+      if (selectedChip === "Other" && !createLeadForm.remarks.trim()) {
+        toast.error("Please enter remarks for 'Other' reason.");
+        return;
+      }
+    }
     const data = {
-      remarks: createLeadForm?.remarks ? createLeadForm?.remarks : selectedChip,
-      imei: createLeadForm?.imei,
+      // remarks: createLeadForm?.remarks ? createLeadForm?.remarks : selectedChip,
+      remarks:
+        createLeadForm.is_converted
+          ? createLeadForm.remarks
+          : selectedChip === "Other"
+            ? createLeadForm.remarks
+            : selectedChip,
+      // imei: createLeadForm?.imei,
+      imei: createLeadForm.is_converted ? createLeadForm.imei : "",
       is_converted: createLeadForm?.is_converted,
       token_id: rowData?.id,
     };
@@ -138,7 +168,32 @@ const SurveyFormUser = () => {
     { Header: "Email", accessor: "email", minWidth: 200, flex: 1 },
     { Header: "Model", accessor: "model", minWidth: 180, flex: 1 },
     { Header: "Source", accessor: "query", minWidth: 180, flex: 1 },
-    { Header: "Feedback", accessor: "type", minWidth: 180, flex: 1 },
+    { Header: "Query Type", accessor: "type", minWidth: 180, flex: 1 },
+    // { Header: "Feedback", accessor: "message", minWidth: 180, flex: 1 },
+    {
+      Header: "Feedback",
+      accessor: "message",
+      minWidth: 180,
+      flex: 1,
+      renderCell: (params) => {
+        return (
+          <div
+            style={{
+              maxHeight: "100px",
+              overflowY: "auto",
+              padding: "2px",
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+              border: "1px solid #c3c3c3",
+              borderRadius: "5px"
+            }}
+          >
+            {params.row.message || "---"}
+          </div>
+        );
+      },
+    },
+
     { Header: "Status", accessor: "isCreated", minWidth: 180, flex: 1 },
     {
       Header: "Action",
@@ -216,6 +271,7 @@ const SurveyFormUser = () => {
     remarks: item.leads?.remarks || "-",
     id: item.id,
     leads: item.leads,
+    message: item.message,
   }));
 
   const [exporting, setExporting] = useState(false);
@@ -664,10 +720,18 @@ const SurveyFormUser = () => {
                   label="IMEI Number"
                   name="imei"
                   value={createLeadForm.imei}
-                  onChange={(e) =>
-                    setCreateLeadForm(prev => ({ ...prev, imei: e.target.value }))
-                  }
+                  // onChange={(e) =>
+                  //   setCreateLeadForm(prev => ({ ...prev, imei: e.target.value }))
+                  // }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value)) {
+                      setCreateLeadForm(prev => ({ ...prev, imei: value }));
+                    }
+                  }}
                   placeholder="Enter 15-digit IMEI"
+                  maxLength={15}
+                  tooltipContent="IMEI No. must be 15 digit"
                   // icon={<Hash className="w-5 h-5 text-gray-500" />}
                   className="w-full"
                 />

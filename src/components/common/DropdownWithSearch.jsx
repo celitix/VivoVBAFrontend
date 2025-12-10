@@ -112,7 +112,7 @@ const DropdownWithSearch = ({
         closeMenuOnScroll={true} // Auto-close on scroll
         closeMenuOnSelect={true} // Close when selecting
       />
-   
+
 
     </div>
   );

@@ -356,14 +356,14 @@ const ManageUser = () => {
                 />
               </IconButton>
             </CustomTooltip>
-            <CustomTooltip arrow title="User Survey Forms" placement="top">
+            {/* <CustomTooltip arrow title="User Survey Forms" placement="top">
               <IconButton onClick={() => getSurveyFilledForms(row)}>
                 <FileSpreadsheet
                   className="text-blue-500 cursor-pointer hover:text-blue-600"
                   size={20}
                 />
               </IconButton>
-            </CustomTooltip>
+            </CustomTooltip> */}
           </>
         </div>
       ),

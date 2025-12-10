@@ -418,11 +418,10 @@ const SurveyFormReport = () => {
                   Lead Created
                 </h3>
                 <span
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${
-                    rowData.leads.is_converted
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-amber-800"
-                  }`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${rowData.leads.is_converted
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-amber-800"
+                    }`}
                 >
                   {rowData.leads.is_converted ? "Converted" : "Not Converted"}
                 </span>
@@ -464,11 +463,10 @@ const SurveyFormReport = () => {
                     Converted
                   </div>
                   <div
-                    className={`font-bold ${
-                      rowData.leads.is_converted
-                        ? "text-green-600"
-                        : "text-orange-600"
-                    }`}
+                    className={`font-bold ${rowData.leads.is_converted
+                      ? "text-green-600"
+                      : "text-orange-600"
+                      }`}
                   >
                     {rowData.leads.is_converted ? "Yes" : "No"}
                   </div>

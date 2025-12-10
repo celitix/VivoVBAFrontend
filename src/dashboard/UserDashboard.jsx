@@ -138,7 +138,6 @@ const UserDashboard = () => {
     ],
   };
 
-  console.log("barData:", barData);
 
   const barOptions = {
     responsive: true,

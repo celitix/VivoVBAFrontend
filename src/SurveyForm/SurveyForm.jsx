@@ -112,11 +112,12 @@ const SurveyForm = () => {
     model: "",
     query: "",
     type: "",
+    message: "",
   });
 
   const souceList = [
     { label: "Facebook", value: "facebook" },
-    { label: "instagram", value: "Instagram" },
+    { label: "Instagram", value: "Instagram" },
     { label: "YouTube", value: "youtube" },
   ];
 
@@ -317,8 +318,13 @@ const SurveyForm = () => {
       return;
     }
 
-    if (isPurchase === false && !formData.type.trim()) {
-      setErrors({ type: "Feedback required" });
+    // if (isPurchase === false && !formData.type.trim()) {
+    //   setErrors({ type: "Feedback required" });
+    //   toast.error("Please enter your feedback");
+    //   return;
+    // }
+    if (isPurchase === false && !formData.message.trim()) {
+      setErrors({ message: "Feedback required" });
       toast.error("Please enter your feedback");
       return;
     }
@@ -326,9 +332,14 @@ const SurveyForm = () => {
     // All valid → submit
     setSubmitting(true);
     try {
-      const res = await saveSurveyForm({ token, ...formData });
+      const type = isPurchase === true ? "MODEL ENQUIRY" : "GENERAL ENQUIRY";
+      const res = await saveSurveyForm({
+        token,
+        ...formData,
+        type,
+      });
       if (res?.status) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        // await new Promise((resolve) => setTimeout(resolve, 2000));
         toast.success("Thank you! Your response has been recorded.");
         navigate("/thank-you", {
           replace: true,
@@ -646,6 +657,13 @@ const SurveyForm = () => {
               <div className="h-1.5 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 w-[99.4%] absolute z-[9999] top-0 rounded-t-full" />
             </div>
             <div className="bg-white/95 backdrop-blur-2xl rounded-t-2xl rounded-b-3xl shadow-2xl border border-white/60 p-4  md:p-10  ">
+              <div className="text-center">
+                <img
+                  src="/vivologonew.png"
+                  alt="vivo"
+                  className="h-14 mx-auto mb-4"
+                />
+              </div>
               <div className="text-center mb-5 ">
                 <div className="text-center">
                   <h2 className="text-4xl font-bold text-gray-800 playf">
@@ -794,13 +812,12 @@ const SurveyForm = () => {
                     <button
                       onClick={() => {
                         setIsPurchase(true);
-                        setFormData((prev) => ({ ...prev, type: "" }));
+                        setFormData((prev) => ({ ...prev, message: "" }));
                       }}
-                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${
-                        isPurchase === true
-                          ? "border-blue-600 bg-blue-50 text-blue-700 shadow-md"
-                          : "border-gray-300 bg-gray-50 hover:border-blue-300"
-                      }`}
+                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === true
+                        ? "border-blue-600 bg-blue-50 text-blue-700 shadow-md"
+                        : "border-gray-300 bg-gray-50 hover:border-blue-300"
+                        }`}
                     >
                       Purchase Inquiry
                     </button>
@@ -809,11 +826,10 @@ const SurveyForm = () => {
                         setIsPurchase(false);
                         setFormData((prev) => ({ ...prev, model: "" }));
                       }}
-                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${
-                        isPurchase === false
-                          ? "border-purple-600 bg-purple-50 text-purple-700 shadow-md"
-                          : "border-gray-300 bg-gray-50 hover:border-purple-300"
-                      }`}
+                      className={`p-5 rounded-2xl border-2 font-medium transition-all ${isPurchase === false
+                        ? "border-purple-600 bg-purple-50 text-purple-700 shadow-md"
+                        : "border-gray-300 bg-gray-50 hover:border-purple-300"
+                        }`}
                     >
                       General Feedback
                     </button>
@@ -833,13 +849,24 @@ const SurveyForm = () => {
                   />
                 )}
 
-                {isPurchase === false && (
+                {/* {isPurchase === false && (
                   <UniversalTextArea
                     label="Your Feedback"
                     placeholder="Share your thoughts..."
                     value={formData.type}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, type: e.target.value }))
+                    }
+                    rows={4}
+                  />
+                )} */}
+                {isPurchase === false && (
+                  <UniversalTextArea
+                    label="Your Feedback"
+                    placeholder="Share your thoughts..."
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, message: e.target.value }))
                     }
                     rows={4}
                   />
@@ -856,11 +883,11 @@ const SurveyForm = () => {
               </div>
 
               <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-                <img
+                {/* <img
                   src="/vivologonew.png"
                   alt="vivo"
                   className="h-14 mx-auto mb-4"
-                />
+                /> */}
                 <p className="text-lg font-bold text-gray-800">
                   Yingjia Communication Pvt. Ltd.
                 </p>

@@ -23,7 +23,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [openDropdown, setOpenDropdown] = useState(null);
-  const {currentRole} = useRoleContext()
+  const { currentRole } = useRoleContext()
 
   const handleLogout = async () => {
     try {
@@ -67,7 +67,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       icon: FileSpreadsheet,
       type: "single",
       path: "/",
-       role: ["admin", "user"]
+      role: ["admin", "user"]
     },
     {
       id: "2",
@@ -78,13 +78,22 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       path: "/manageuser",
       role: ["admin"]
     },
+    // {
+    //   id: "3",
+    //   name: "surveyform",
+    //   label: "Survey Report",
+    //   icon: FileSpreadsheet,
+    //   type: "single",
+    //   path: "/surveyformreport",
+    //   role: ["admin"]
+    // },
     {
       id: "3",
       name: "surveyform",
       label: "Survey Report",
       icon: FileSpreadsheet,
       type: "single",
-      path: "/surveyformreport",
+      path: "/surveyformreportall",
       role: ["admin"]
     },
     {
@@ -117,8 +126,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   ];
 
   const filteredMenu = menu.filter(item =>
-  item.role?.includes(currentRole)
-);
+    item.role?.includes(currentRole)
+  );
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 

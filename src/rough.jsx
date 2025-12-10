@@ -68,7 +68,6 @@ const AdminDashboard = () => {
     trackLeadData();
   }, []);
 
-  console.log("loading", loading);
   // ****************data seggregation ****************
 
   useEffect(() => {

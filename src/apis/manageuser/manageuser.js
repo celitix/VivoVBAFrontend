@@ -94,6 +94,7 @@ export const exportSurveyReport = async (token) => {
     },
   });
 };
+
 export const exportSurveyReportUser = async () => {
   return await axios.get(`/api/export`, {
     responseType: "blob",
@@ -102,6 +103,25 @@ export const exportSurveyReportUser = async () => {
     },
   });
 };
+
+export const allUserSurveyData = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return await fetchWithAuth(`/allUserData/${query ? `?${query}` : ""}`, {
+    method: "GET",
+  });
+};
+
+export const allUsersList = async () => {
+  return await fetchWithAuth(`/allUser`, {
+    method: "GET",
+  });
+};
+
+// export const allUserSurveyData = async () => {
+//   return await fetchWithAuth(`/allUserData`, {
+//     method: "GET",
+//   });
+// };
 
 //================ Survey form apis started ===============================
 
